@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <!-- This example uses hangoutiframer.  See
+     http://hangoutiframer.appspot.com for further details. -->
+ <!-- https://hangoutiframer.appspot.com/forward/gadgetspec?u=https://kx-tutor-hangout-app.appspot.com/static/index.html -->
+
+  <script type="text/javascript" src="//hangoutsapi.talkgadget.google.com/talkgadget/apps/gadgets/js/rpc.js"></script>
+  <!-- <script type="text/javascript" src="//hangoutsapi.talkgadget.google.com/hangouts/api/hangout.js?v=1.0"></script>-->
+  <script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>
+
+  <script type="text/javascript" src="//www.google.com/jsapi"></script>
+  <script type="text/javascript">google.load("jquery","1.7.1");</script>
+
+  <link rel="stylesheet" href="/css/boilerplate.min.css">
+  <link type="text/css" rel="stylesheet" href="/css/main.css" />
+  <script type="text/javascript" src="/js/tutor.js"></script>
+</head>
+  <body style="background-color: whitesmoke">
+  <div class="container">
+        <div class="row clearfix">
+            <div class="col-md-4 column">
+              <div id="msg"></div>
+              <form>
+                <p id="tutor">Instructor</p>
+                <p>Select Subject(s)</p>
+
+                <select class="form-control input-sm" multiple name="gd" size="7" style="width: 150px;font-size: .9em">
+                  <option>General Math</option>
+                  <option>Algebra</option>
+                  <option>Calculus</option>
+                  <option>Geometry</option>
+                  <option>Science</option>
+                  <option>Technology</option>
+                  <option>Writing</option>
+                </select>
+                <p style="margin-top: 5px">
+                 <input class="btn btn-info" type="submit" value="Submit">
+                </p>
+            </form>
+              </div>
+          </div>
+    </div>
+    <script type="text/javascript" src="https://apis.google.com/js/client.js?onload=onClientReady"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+  </body>
+</html>
