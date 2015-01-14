@@ -41,7 +41,7 @@
                 <p>Please select tutoring subject(s):</p>
               <div class="container">
                 <div class="row clearfix">
-                    <div class="col-md-4 column">
+                    <div class="col-md-2 column" style="width:250px">
                         <div>
                             <table id="subjectTable" class="table" data-toggle="table"
                                         data-height="300" data-width="20"

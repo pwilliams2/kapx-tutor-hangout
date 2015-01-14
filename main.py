@@ -18,7 +18,19 @@
 #from google.appengine.ext.webapp import util
 from google.appengine.ext import ndb
 
+
 import webapp2
+import models
+
+DEFAULT_TUTOR_HANGOUT_NAME = 'default_tutor_ndb'
+
+def tutor_hangouts_key(tutor_hangouts_name=DEFAULT_TUTOR_HANGOUTS_NAME):
+    """Constructs a Datastore key for a Guestbook entity with guestbook_name."""
+    return ndb.Key('Tutor_Hangouts', tutor_hangouts_name)
+
+class Tutor(models.User):
+    subjects = ndb.StringProperty()
+
 
 
 class MainHandler(webapp2.RequestHandler):
@@ -40,6 +52,9 @@ class ReservationHandler(webapp2.RequestHandler):
         # Print some JSON
         self.response.out.write(self.request.get('subjects'))
         self.response.out.write('{"message":"Submit Clicked!"}\n')
+
+        tutor = Tutor()
+        tutor.email = 'pwilliams2@kaplan.edu'
 
 
 application = webapp2.WSGIApplication([
