@@ -33,10 +33,10 @@
  <div class="container">
     <div class="row clearfix" style="margin-left: 5px">
             <div class="col-md-4 column">
+               <p id="count"></p>
 
-              <p id="count"></p>
+                <p><b>Instructor: </b><span id="localParticipant"></span></p>
 
-                <p><b>Instructor: </b><span id="tutor"></span></p>
                 <p>Participants: <span id="participants"></span></p>
                 <p>Please select tutoring subject(s):</p>
               <div class="container">
@@ -44,7 +44,7 @@
                     <div class="col-md-2 column" style="width:250px">
                         <div>
                             <table id="subjectTable" class="table" data-toggle="table"
-                                        data-height="300" data-width="20"
+                                        data-height="320" data-width="20"
                                         data-click-to-select="true">
                                 <thead>
                                     <tr>
@@ -63,13 +63,15 @@
             </div>
 </div>
 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+
     <!-- The JavaScript for this app. This must always be a full URL not a
      relative path.
      Tip: You can load it from a local web server such as
      http://localhost/app.js for faster single user development -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
-    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js"></script>
+
+    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.13"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
 </body>
 ]]></Content>

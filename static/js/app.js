@@ -17,6 +17,8 @@
 * the License.
 */
 var serverPath = '//kx-tutor-hangout-app.appspot.com/';
+var hangoutURL = '';
+var localParticipant;
 
 // The functions triggered by the buttons on the Hangout App
 function countButtonClick() {
@@ -55,14 +57,16 @@ function getSubmitClick(subjects) {
   console.log('Selected subject' + subjects);
 
   var http = new XMLHttpRequest();
-  http.open('GET', serverPath + "subjects?=" + subjects);
+  http.open('GET', serverPath + "subjects?=" + subjects + '&hoURL=' + hangoutURL);
   http.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
       var jsonResponse = JSON.parse(http.responseText);
       console.log(jsonResponse);
 
-      var messageElement = document.getElementById('message');
-      setText(messageElement, 'Selected subject: ' + subjects);
+      $('message').html('params: ' + subjects
+        + ' uri=' + encodeURI(hangoutURL) + '&pid='
+        + localParticipant.person.id + '&pName='
+        + localParticipant.person.displayName);
     }
   }
   http.send();
@@ -82,48 +86,16 @@ function updateStateUi(state) {
 
 function updateParticipantsUi(participants) {
   console.log('Participants count: ' + participants.length);
+  //var tutorEmail = participants[0].person.emails[0].value;
+   // console.log(tutorEmail);
+
   var participantsListElement = document.getElementById('participants');
   setText(participantsListElement, participants.length.toString());
 
 }
 
-function updateTutorUi(participants) {
-  var tutor = document.getElementById('tutor');
-  if (participants.length > 0) {
-    var tutor = document.getElementById('tutor');
-    setText(tutor, participants[0].person.displayName);
-  }
-}
 
-$(function () {
 
-          var id = 0,
-              getRows = function () {
-              //  var rows = [];
-               var rows = [
-                  {"subject" : "Business"},
-                  {"subject" : "General Math"},
-                  {"subject" : "Calculus"},
-                  {"subject" : "Geometry"},
-                  {"subject" : "Science"},
-                  {"subject" : "Technology"},
-                  {"subject" : "Writing"}
-                ];
-
-                return rows;
-              },
-              // init table use data
-              $table = $('#subjectTable').bootstrapTable({
-                data: getRows()
-              });
-
-        // $table is defined above
-        $('#get-selections').click(function () {
-            getSubmitClick(JSON.stringify($table.bootstrapTable('getSelections')));
-            //    alert('Selected values: ' + JSON.stringify($table.bootstrapTable('getSelections')));
-        });
-
-     });
 
 
 // A function to be run at app initialization time which registers our callbacks
@@ -132,18 +104,22 @@ function init() {
 
   var apiReady = function(eventObj) {
     if (eventObj.isApiReady) {
-       console.log('API is ready');
+        console.log('API is ready');
+
+        hangoutURL = gapi.hangout.getHangoutUrl();
+        console.log('hangoutUrl: ' + hangoutURL);
+
+        localParticipant = gapi.hangout.getLocalParticipant();  //Tutor
+        $('#localParticipant').html(localParticipant.person.displayName);
 
        gapi.hangout.data.onStateChanged.add(function(eventObj) {
          updateStateUi(eventObj.state);
        });
-      gapi.hangout.onParticipantsChanged.add(function(eventObj) {
-        updateParticipantsUi(eventObj.participants);
 
+       gapi.hangout.onParticipantsChanged.add(function(eventObj) {
+       updateParticipantsUi(eventObj.participants);
       });
 
-      // update tutor name
-      updateTutorUi(gapi.hangout.getParticipants());
       gapi.hangout.onApiReady.remove(apiReady);
     }
   };
@@ -154,3 +130,35 @@ function init() {
 }
 
 gadgets.util.registerOnLoadHandler(init);
+
+$(function() {
+     console.log('loadData');
+      var id = 0,
+          getRows = function () {
+
+           var rows = [
+              {"subject" : "Business"},
+              {"subject" : "General Math"},
+              {"subject" : "Calculus"},
+              {"subject" : "Geometry"},
+              {"subject" : "Science"},
+              {"subject" : "Technology"},
+              {"subject" : "Writing"}
+            ];
+
+            return rows;
+          },
+          // init table use data
+          $table = $('#subjectTable').bootstrapTable({
+            data: getRows()
+          });
+
+        // $table is defined above
+        $('#get-selections').click(function () {
+            getSubmitClick(JSON.stringify($table.bootstrapTable('getSelections')));
+            //    alert('Selected values: ' + JSON.stringify($table.bootstrapTable('getSelections')));
+
+        });
+
+});
+
