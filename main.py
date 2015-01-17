@@ -18,29 +18,50 @@
 #from google.appengine.ext.webapp import util
 from google.appengine.ext import ndb
 
-
+import logging
 import webapp2
-#import models
+import models.models as models
 
-DEFAULT_TUTOR_HANGOUTS_NAME = 'default_tutor_ndb'
+DEFAULT_TUTOR_HANGOUTS_NAME = 'tutor_hangouts'
 
 def tutor_hangouts_key(tutor_hangouts_name=DEFAULT_TUTOR_HANGOUTS_NAME):
-    """Constructs a Datastore key for a Guestbook entity with guestbook_name."""
+    """Constructs a Datastore key for a Tutor entity."""
     return ndb.Key('Tutor_Hangouts', tutor_hangouts_name)
 
-#class Tutor(models.User):
-#    subjects = ndb.StringProperty()
+class BaseHandler(webapp2.RequestHandler):
+    def handle_exception(self, exception, debug):
+        # Log the error.
+        logging.exception(exception)
+
+        # Set a custom message.
+        self.response.write('An error occurred.')
+
+        # If the exception is a HTTPException, use its error code.
+        # Otherwise use a generic 500 error code.
+        if isinstance(exception, webapp2.HTTPException):
+            self.response.set_status(exception.code)
+        else:
+            self.response.set_status(500)
+
+def handle_404(request, response, exception):
+    logging.exception(exception)
+    response.write('Oops! I could swear this page was here!')
+    response.set_status(404)
+
+def handle_500(request, response, exception):
+    logging.exception(exception)
+    response.write('A server error occurred!')
+    response.set_status(500)
 
 
-
-class MainHandler(webapp2.RequestHandler):
+class MainHandler(BaseHandler):
     def get(self):
         # Set the cross origin resource sharing header to allow AJAX
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         # Print some JSON
         self.response.out.write('{"mainHandler":"Submit Clicked!"}\n')
 
-class ReservationHandler(webapp2.RequestHandler):
+class ReservationHandler(BaseHandler):
     def get(self):
         # We set the same parent key on the 'Greeting' to ensure each Greeting
         # is in the same entity group. Queries across the single entity group
@@ -50,11 +71,17 @@ class ReservationHandler(webapp2.RequestHandler):
          # Set the cross origin resource sharing header to allow AJAX
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         # Print some JSON
-        self.response.out.write(self.request.get('subjects'))
-        self.response.out.write('{"rsvpHandler":"Submit Clicked!"}\n')
 
-        #tutor = Tutor()
-        #tutor.email = 'pwilliams2@kaplan.edu'
+        tutor = models.Tutor(parent=tutor_hangouts_key(DEFAULT_TUTOR_HANGOUTS_NAME))
+        tutor.subjects = self.request.get('subjects')
+        tutor.id = self.request.get('pid')
+        tutor.name = self.request.get('pName')
+        tutor.gid = self.request.get('gid')
+
+        tutor.put()
+       # self.response.out.write('{"rsvpHandler":"Submit Clicked!"}\n')
+
+        #self.response.out.write("pid: " + tutor.id + "\n")
 
 
 application = webapp2.WSGIApplication([
@@ -62,3 +89,5 @@ application = webapp2.WSGIApplication([
         ('/subjects', ReservationHandler)
     ], debug=True)
 
+application.error_handlers[404] = handle_404
+application.error_handlers[500] = handle_500

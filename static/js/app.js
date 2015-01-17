@@ -52,21 +52,28 @@ function setText(element, text) {
 }
 
 function getSubmitClick(subjects) {
-
-  //var selectedSub = document.getElementById('subjects').value;
   console.log('Selected subject' + subjects);
-
+  
+  var arr = hangoutURL.split('/');
+  var gid = arr[arr.length-1];
+  
   var http = new XMLHttpRequest();
-  http.open('GET', serverPath + "subjects?=" + subjects + '&hoURL=' + hangoutURL);
+              http.open('GET', serverPath + 'subjects?subjects='
+              + subjects + '&gid=' + gid
+              + '&pid=' + localParticipant.person.id
+              + '&pName=' + localParticipant.person.displayName);
+
   http.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
       var jsonResponse = JSON.parse(http.responseText);
       console.log(jsonResponse);
 
-      $('message').html('params: ' + subjects
-        + ' uri=' + encodeURI(hangoutURL) + '&pid='
-        + localParticipant.person.id + '&pName='
-        + localParticipant.person.displayName);
+      $('message').html("Submitted");
+
+      //$('message').html('params: ' + subjects
+      //  + '&hoUrl=' + encodeURI(hangoutURL) + '&pid='
+      //  + localParticipant.person.id + '&pName='
+      //  + localParticipant.person.displayName);
     }
   }
   http.send();
