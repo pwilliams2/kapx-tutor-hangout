@@ -58,7 +58,7 @@ function getSubmitClick(subjects) {
   var gid = arr[arr.length-1];
   
   var http = new XMLHttpRequest();
-              http.open('GET', serverPath + 'subjects?subjects='
+              http.open('GET', serverPath + 'addsubjects?subjects='
               + subjects + '&gid=' + gid
               + '&pid=' + localParticipant.person.id
               + '&pName=' + localParticipant.person.displayName);
@@ -103,8 +103,6 @@ function updateParticipantsUi(participants) {
 
 
 
-
-
 // A function to be run at app initialization time which registers our callbacks
 function init() {
   console.log('Init app.');
@@ -116,7 +114,7 @@ function init() {
         hangoutURL = gapi.hangout.getHangoutUrl();
         console.log('hangoutUrl: ' + hangoutURL);
 
-        localParticipant = gapi.hangout.getLocalParticipant();  //Tutor
+        localParticipant = gapi.hangout.getLocalParticipant();  //TutorSubjects
         $('#localParticipant').html(localParticipant.person.displayName);
 
        gapi.hangout.data.onStateChanged.add(function(eventObj) {

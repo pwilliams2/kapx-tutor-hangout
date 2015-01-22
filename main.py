@@ -14,19 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from collections import namedtuple
+import json
+from pprint import pprint
 
-#from google.appengine.ext.webapp import util
-from google.appengine.ext import ndb
+from google.appengine.ext import ndb, db
 
 import logging
 import webapp2
-import models.models as models
+from models.models import HangoutSubjects, TutorHangoutSessions, TutorSubjects
+from utils import JSONEncoder
 
-DEFAULT_TUTOR_HANGOUTS_NAME = 'tutor_hangouts'
 
-def tutor_hangouts_key(tutor_hangouts_name=DEFAULT_TUTOR_HANGOUTS_NAME):
-    """Constructs a Datastore key for a Tutor entity."""
-    return ndb.Key('Tutor_Hangouts', tutor_hangouts_name)
+SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'subjects_root')
+TUTOR_SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'tutor_subjects_root')
+TUTOR_SESSIONS_PARENT_KEY = ndb.Key("Entity", 'tutor_sessions_root')
 
 class BaseHandler(webapp2.RequestHandler):
     def handle_exception(self, exception, debug):
@@ -53,8 +55,32 @@ def handle_500(request, response, exception):
     response.write('A server error occurred!')
     response.set_status(500)
 
+def load(self):
+        logging.info("loading subjects...")
+        HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
+                        subject="Business",
+                        isAvailable=False).put()
 
-class MainHandler(BaseHandler):
+        HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
+                        subject="Technology",
+                        isAvailable=False).put()
+
+        HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
+                        subject="General Math",
+                        isAvailable=False).put()
+
+        HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
+                        subject="Calculus",
+                        isAvailable=False).put()
+        HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
+                        subject="Science",
+                        isAvailable=False).put()
+
+        HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
+                        subject="Writing",
+                        isAvailable=False).put()
+
+class TestHandler(BaseHandler):
     def get(self):
         # Set the cross origin resource sharing header to allow AJAX
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
@@ -63,30 +89,77 @@ class MainHandler(BaseHandler):
 
 class ReservationHandler(BaseHandler):
     def get(self):
-        # We set the same parent key on the 'Greeting' to ensure each Greeting
+        # We set the same parent key to ensure each entirty
         # is in the same entity group. Queries across the single entity group
         # will be consistent. However, the write rate to a single entity group
         # should be limited to ~1/second.
 
-         # Set the cross origin resource sharing header to allow AJAX
+        # Set the cross origin resource sharing header to allow AJAX
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
-        # Print some JSON
 
-        tutor = models.Tutor(parent=tutor_hangouts_key(DEFAULT_TUTOR_HANGOUTS_NAME))
+        self.updatesubject()
+
+        self.response.out.write('after update subject')
+        # self.redirect(self.request.referer)
+
+    def updatesubject(self):
+        logging.info('updatesubject')
+
+        data = self.request.get('subjects')
+        sel_subjects = json.loads(data)
+        json_string = json.dumps(sel_subjects,sort_keys=True,indent=4, encoding="utf-8")
+
+        for ho_subject in sel_subjects:
+            jsonobj = json.loads(JSONEncoder().encode(ho_subject))
+            input_subject = jsonobj['subject']
+            state = jsonobj['state']  #boolean
+            print jsonobj['subject'], jsonobj['state']
+
+            subjects = HangoutSubjects.query(ancestor=SUBJECTS_PARENT_KEY).filter(HangoutSubjects.subject == input_subject).fetch()
+
+            for subject in subjects:
+                subject.isAvailable = state
+                subject.put()
+
+
+    def updatetutor(self):
+        logging.info("updatetutor")
+        tutor = TutorSubjects(parent=TUTOR_SUBJECTS_PARENT_KEY)
         tutor.subjects = self.request.get('subjects')
         tutor.id = self.request.get('pid')
         tutor.name = self.request.get('pName')
-        tutor.gid = self.request.get('gid')
-
         tutor.put()
-       # self.response.out.write('{"rsvpHandler":"Submit Clicked!"}\n')
 
-        #self.response.out.write("pid: " + tutor.id + "\n")
+    def updatesession(self):
+        logging.info("updatesession")
+        tutor_session = TutorHangoutSessions(parent=TUTOR_SESSIONS_PARENT_KEY)
+        tutor_session.subjects = self.request.get('subjects')
+        tutor_session.id = self.request.get('pid')
+        tutor_session.name = self.request.get('pName')
+        tutor_session.gid = self.request.get('gid')
+        tutor_session.put()
+
+
+
+class SessionInfoHandler(BaseHandler):
+    def get(self):
+        # Set the cross origin resource sharing header to allow AJAX
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+
+        subjects = HangoutSubjects.query(ancestor=SUBJECTS_PARENT_KEY).order(HangoutSubjects.subject).fetch()
+        if not subjects:
+            logging.info("no subjects")
+            load(self)
+            subjects = HangoutSubjects.query(ancestor=SUBJECTS_PARENT_KEY).order(HangoutSubjects.subject).fetch()
+
+        self.response.out.write(JSONEncoder().encode(subjects))
+        # print json.dumps([subject.to_dict() for subject in subjects])
+
 
 
 application = webapp2.WSGIApplication([
-        ('/', MainHandler),
-        ('/subjects', ReservationHandler)
+        ('/', SessionInfoHandler),
+        ('/addsubjects', ReservationHandler)
     ], debug=True)
 
 application.error_handlers[404] = handle_404
