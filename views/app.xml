@@ -23,8 +23,8 @@
 <!DOCTYPE html>
 <!-- The hangout API JavaScript. Always include this first -->
 
-    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/static/css/boilerplate.min.css">
-    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/static/css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/boilerplate.min.css">
+    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/bootstrap-table.min.css">
     <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/main.css" />
     <script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>
 
