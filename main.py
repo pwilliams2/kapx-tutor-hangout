@@ -14,17 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from collections import namedtuple
+
 import json
-from pprint import pprint
-
-from google.appengine.ext import ndb, db
-
 import logging
-import webapp2
-from models.models import HangoutSubjects, TutorHangoutSessions, TutorSubjects
-from utils import JSONEncoder
 
+import webapp2
+from google.appengine.ext import ndb
+
+from apiclient import discovery
+from models.models import HangoutSubjects, TutorHangoutSessions, TutorSubjects
+from utils import JSONEncoder, autolog
+from tutor_hangouts_api import API, API_ROOT, VERSION
 
 SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'subjects_root')
 TUTOR_SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'tutor_subjects_root')
@@ -56,7 +56,7 @@ def handle_500(request, response, exception):
     response.set_status(500)
 
 def load(self):
-        logging.info("loading subjects...")
+        autolog("loading subjects")
         HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
                         subject="Business",
                         isAvailable=False).put()
@@ -72,6 +72,7 @@ def load(self):
         HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
                         subject="Calculus",
                         isAvailable=False).put()
+
         HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
                         subject="Science",
                         isAvailable=False).put()
@@ -80,12 +81,15 @@ def load(self):
                         subject="Writing",
                         isAvailable=False).put()
 
-class TestHandler(BaseHandler):
+class PingHandler(BaseHandler):
     def get(self):
         # Set the cross origin resource sharing header to allow AJAX
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+
+        autolog("Pinghandler")
+
         # Print some JSON
-        self.response.out.write('{"mainHandler":"Submit Clicked!"}\n')
+        self.response.out.write('{"PingHandler":"Alive..."}\n')
 
 class ReservationHandler(BaseHandler):
     def get(self):
@@ -98,26 +102,29 @@ class ReservationHandler(BaseHandler):
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
 
         self.updatesubject()
-
-        self.response.out.write('after update subject')
-        # self.redirect(self.request.referer)
+        self.redirect(self.request.referer)
 
     def updatesubject(self):
         logging.info('updatesubject')
 
-        data = self.request.get('subjects')
-        sel_subjects = json.loads(data)
+        subjects = self.request.get('subjects')
+        tutor_person_id = self.request.get('pid')
+        tutor_name = self.request.get('pName')
+        hangout_id = self.request.get('gid')
+
+        sel_subjects = json.loads(subjects)
         json_string = json.dumps(sel_subjects,sort_keys=True,indent=4, encoding="utf-8")
 
-        for ho_subject in sel_subjects:
+        for ho_subject in sel_subjects:  # Get selected tutor subject(s)
             jsonobj = json.loads(JSONEncoder().encode(ho_subject))
             input_subject = jsonobj['subject']
-            state = jsonobj['state']  #boolean
-            print jsonobj['subject'], jsonobj['state']
+            state = jsonobj['state']  #boolean for subject availability
+            logging.info('subject: {s}, state {s}', (jsonobj['subject'], jsonobj['state']))
 
-            subjects = HangoutSubjects.query(ancestor=SUBJECTS_PARENT_KEY).filter(HangoutSubjects.subject == input_subject).fetch()
+            # Find the existing subject and update it's availability to TRUE
+            subjects_list = HangoutSubjects.query(ancestor=SUBJECTS_PARENT_KEY).filter(HangoutSubjects.subject == input_subject).fetch()
 
-            for subject in subjects:
+            for subject in subjects_list:
                 subject.isAvailable = state
                 subject.put()
 
@@ -139,28 +146,58 @@ class ReservationHandler(BaseHandler):
         tutor_session.gid = self.request.get('gid')
         tutor_session.put()
 
-
-
 class SessionInfoHandler(BaseHandler):
     def get(self):
         # Set the cross origin resource sharing header to allow AJAX
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
 
-        subjects = HangoutSubjects.query(ancestor=SUBJECTS_PARENT_KEY).order(HangoutSubjects.subject).fetch()
+        # subjects = HangoutSubjects.query(ancestor=SUBJECTS_PARENT_KEY).order(HangoutSubjects.subject).fetch()
+        subjects = self.get_subjects()
+
         if not subjects:
-            logging.info("no subjects")
-            load(self)
-            subjects = HangoutSubjects.query(ancestor=SUBJECTS_PARENT_KEY).order(HangoutSubjects.subject).fetch()
+            load(self)  # hydrate subject model
+            subjects = self.get_subjects()
 
         self.response.out.write(JSONEncoder().encode(subjects))
-        # print json.dumps([subject.to_dict() for subject in subjects])
 
+    def get_subjects(self):
+        # Build a service object for interacting with the API.
+        discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (API_ROOT, API, VERSION)
+        service = discovery.build(API, VERSION, discoveryServiceUrl=discovery_url)
 
+        response = service.subjects().list(order='subject').execute()
+        if response:
+            return response.get('items', [])
+        else:
+            autolog("no subjects found")
+            return [{}]
 
 application = webapp2.WSGIApplication([
         ('/', SessionInfoHandler),
-        ('/addsubjects', ReservationHandler)
+        ('/addsubjects', ReservationHandler),
+        ('/heartbeat', PingHandler)
     ], debug=True)
 
 application.error_handlers[404] = handle_404
 application.error_handlers[500] = handle_500
+
+
+# def main():
+#     # Build a service object for interacting with the API.
+#     api_root = 'https://kx-tutor-hangout-app.appspot.com/_ah/api'
+#     api = 'tutorhangouts'
+#     version = 'v1'
+#     discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (api_root, api, version)
+#     service = build(api, version, discoveryServiceUrl=discovery_url)
+#
+#     # Fetch all greetings and print them out.
+#     response = service.subjects().list.execute()
+#     # response = service.greetings().list().execute()
+#     pprint.pprint(response)
+#
+#      # Fetch a single greeting and print it out.
+#     # response = service.greetings().get(id='9001').execute()
+#     # pprint.pprint(response)
+#
+# if __name__ == '__main__':
+#   main()
