@@ -6,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,15 +22,61 @@ import webapp2
 from google.appengine.ext import ndb
 
 from apiclient import discovery
+
 from models.models import HangoutSubjects, TutorHangoutSessions, TutorSubjects
 from utils import JSONEncoder, autolog
-from tutor_hangouts_api import API, API_ROOT, VERSION
+import tutor_hangouts_api as hapi
+
 
 SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'subjects_root')
 TUTOR_SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'tutor_subjects_root')
 TUTOR_SESSIONS_PARENT_KEY = ndb.Key("Entity", 'tutor_sessions_root')
 
+
+def handle_404(request, response, exception):
+    logging.exception(exception)
+    response.write('Oops! I could swear this page was here!')
+    response.set_status(404)
+
+
+def handle_500(request, response, exception):
+    logging.exception(exception)
+    response.write('A server error occurred!')
+    response.set_status(500)
+
+
+def load(self):
+    autolog("loading subjects")
+    HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
+                    subject="Business",
+                    isAvailable=False).put()
+
+    HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
+                    subject="Technology",
+                    isAvailable=False).put()
+
+    HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
+                    subject="General Math",
+                    isAvailable=False).put()
+
+    HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
+                    subject="Calculus",
+                    isAvailable=False).put()
+
+    HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
+                    subject="Science",
+                    isAvailable=False).put()
+
+    HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
+                    subject="Writing",
+                    isAvailable=False).put()
+
+
 class BaseHandler(webapp2.RequestHandler):
+    def get(self):
+        # Set the cross origin resource sharing header to allow AJAX
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+
     def handle_exception(self, exception, debug):
         # Log the error.
         logging.exception(exception)
@@ -45,41 +91,6 @@ class BaseHandler(webapp2.RequestHandler):
         else:
             self.response.set_status(500)
 
-def handle_404(request, response, exception):
-    logging.exception(exception)
-    response.write('Oops! I could swear this page was here!')
-    response.set_status(404)
-
-def handle_500(request, response, exception):
-    logging.exception(exception)
-    response.write('A server error occurred!')
-    response.set_status(500)
-
-def load(self):
-        autolog("loading subjects")
-        HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
-                        subject="Business",
-                        isAvailable=False).put()
-
-        HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
-                        subject="Technology",
-                        isAvailable=False).put()
-
-        HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
-                        subject="General Math",
-                        isAvailable=False).put()
-
-        HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
-                        subject="Calculus",
-                        isAvailable=False).put()
-
-        HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
-                        subject="Science",
-                        isAvailable=False).put()
-
-        HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
-                        subject="Writing",
-                        isAvailable=False).put()
 
 class PingHandler(BaseHandler):
     def get(self):
@@ -91,67 +102,81 @@ class PingHandler(BaseHandler):
         # Print some JSON
         self.response.out.write('{"PingHandler":"Alive..."}\n')
 
-class ReservationHandler(BaseHandler):
+
+class PublishHandler(BaseHandler):
     def get(self):
-        # We set the same parent key to ensure each entirty
-        # is in the same entity group. Queries across the single entity group
-        # will be consistent. However, the write rate to a single entity group
-        # should be limited to ~1/second.
+        self.update_subject()
+        # self.update_tutor()
+        self.response.out.write('updated')
 
-        # Set the cross origin resource sharing header to allow AJAX
-        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+    def update_subject(self):
+        autolog("updating subject")
 
-        self.updatesubject()
-        self.redirect(self.request.referer)
-
-    def updatesubject(self):
-        logging.info('updatesubject')
+        # Build a service object for interacting with the API.
+        discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
+        service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
 
         subjects = self.request.get('subjects')
-        tutor_person_id = self.request.get('pid')
-        tutor_name = self.request.get('pName')
-        hangout_id = self.request.get('gid')
-
         sel_subjects = json.loads(subjects)
-        json_string = json.dumps(sel_subjects,sort_keys=True,indent=4, encoding="utf-8")
+        json.dumps(sel_subjects, sort_keys=True, indent=4, encoding="utf-8")
 
         for ho_subject in sel_subjects:  # Get selected tutor subject(s)
-            jsonobj = json.loads(JSONEncoder().encode(ho_subject))
-            input_subject = jsonobj['subject']
-            state = jsonobj['state']  #boolean for subject availability
-            logging.info('subject: {s}, state {s}', (jsonobj['subject'], jsonobj['state']))
+            json_obj = json.loads(JSONEncoder().encode(ho_subject))
+            input_subject = json_obj['subject']
+            state = json_obj['state']  # boolean for subject availability
+            # logging.info('subject: {s}, state {s}', (json_obj['subject'], json_obj['state']))
 
             # Find the existing subject and update it's availability to TRUE
-            subjects_list = HangoutSubjects.query(ancestor=SUBJECTS_PARENT_KEY).filter(HangoutSubjects.subject == input_subject).fetch()
+            subjects_list = HangoutSubjects.query(ancestor=SUBJECTS_PARENT_KEY).filter(
+                HangoutSubjects.subject == input_subject).fetch()
 
             for subject in subjects_list:
-                subject.isAvailable = state
-                subject.put()
+                response = service.subjects().insert(from_datastore=True, subject=subject, isAvailable=state).execute()
+                # autolog(response.get('item',[]))
+                # subject.isAvailable = state
+                # subject.put()
+                print 'here'
 
 
-    def updatetutor(self):
-        logging.info("updatetutor")
+    def update_tutor(self):
+        autolog("updating tutor subject")
         tutor = TutorSubjects(parent=TUTOR_SUBJECTS_PARENT_KEY)
         tutor.subjects = self.request.get('subjects')
-        tutor.id = self.request.get('pid')
+        tutor.person_id = self.request.get('pid')
         tutor.name = self.request.get('pName')
+        tutor.gid = self.request.get('gid')
         tutor.put()
 
-    def updatesession(self):
-        logging.info("updatesession")
+
+class SubscribeHandler(BaseHandler):
+    def update_session(self):
+        autolog("updating tutor hangout session")
         tutor_session = TutorHangoutSessions(parent=TUTOR_SESSIONS_PARENT_KEY)
         tutor_session.subjects = self.request.get('subjects')
-        tutor_session.id = self.request.get('pid')
+        tutor_session.person_id = self.request.get('pid')
         tutor_session.name = self.request.get('pName')
         tutor_session.gid = self.request.get('gid')
         tutor_session.put()
 
-class SessionInfoHandler(BaseHandler):
+
+class SubjectsHandler(BaseHandler):
     def get(self):
         # Set the cross origin resource sharing header to allow AJAX
-        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+        # self.response.headers.add_header("Access-Control-Allow-Origin", "*")
 
-        # subjects = HangoutSubjects.query(ancestor=SUBJECTS_PARENT_KEY).order(HangoutSubjects.subject).fetch()
+        # Build a service object for interacting with the API.
+        # discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % \
+        # (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
+        #
+        # service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
+        #
+        # response = service.subjects().list(order='subject').execute()
+        # if response:
+        #     return response.get('items', [])
+        # else:
+        #     autolog("no subjects found")
+        #     return [{}]
+
         subjects = self.get_subjects()
 
         if not subjects:
@@ -162,8 +187,8 @@ class SessionInfoHandler(BaseHandler):
 
     def get_subjects(self):
         # Build a service object for interacting with the API.
-        discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (API_ROOT, API, VERSION)
-        service = discovery.build(API, VERSION, discoveryServiceUrl=discovery_url)
+        discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
+        service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
 
         response = service.subjects().list(order='subject').execute()
         if response:
@@ -172,32 +197,12 @@ class SessionInfoHandler(BaseHandler):
             autolog("no subjects found")
             return [{}]
 
+
 application = webapp2.WSGIApplication([
-        ('/', SessionInfoHandler),
-        ('/addsubjects', ReservationHandler),
-        ('/heartbeat', PingHandler)
-    ], debug=True)
+                                          ('/', SubjectsHandler),
+                                          ('/publishsubjects', PublishHandler),
+                                          ('/heartbeat', PingHandler)
+                                      ], debug=True)
 
 application.error_handlers[404] = handle_404
 application.error_handlers[500] = handle_500
-
-
-# def main():
-#     # Build a service object for interacting with the API.
-#     api_root = 'https://kx-tutor-hangout-app.appspot.com/_ah/api'
-#     api = 'tutorhangouts'
-#     version = 'v1'
-#     discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (api_root, api, version)
-#     service = build(api, version, discoveryServiceUrl=discovery_url)
-#
-#     # Fetch all greetings and print them out.
-#     response = service.subjects().list.execute()
-#     # response = service.greetings().list().execute()
-#     pprint.pprint(response)
-#
-#      # Fetch a single greeting and print it out.
-#     # response = service.greetings().get(id='9001').execute()
-#     # pprint.pprint(response)
-#
-# if __name__ == '__main__':
-#   main()

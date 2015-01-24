@@ -58,25 +58,25 @@ function getSubmitClick(subjects) {
   var gid = arr[arr.length-1];
   
   var http = new XMLHttpRequest();
-              http.open('GET', serverPath + 'addsubjects?subjects='
-              + subjects + '&gid=' + gid
-              + '&pid=' + localParticipant.person.id
-              + '&pName=' + localParticipant.person.displayName);
-
-  http.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      var jsonResponse = JSON.parse(http.responseText);
-      console.log(jsonResponse);
-
-      $('message').html("Submitted");
-
-      //$('message').html('params: ' + subjects
-      //  + '&hoUrl=' + encodeURI(hangoutURL) + '&pid='
-      //  + localParticipant.person.id + '&pName='
-      //  + localParticipant.person.displayName);
+    http.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        var jsonResponse = JSON.parse(http.responseText);
+        
+        $('#message').html("Submitted");
+      }
+      else {
+          console.log("readyState: " + this.readyState)
+          console.log("status: " + this.status)
+          console.log("statusText: " + http.responseText)
+      }
     }
-  }
-  http.send();
+    http.open('GET', serverPath
+    + 'publishsubjects?subjects=' + subjects
+    + '&gid=' + gid
+    + '&pid=' + localParticipant.person.id
+    + '&pName=' + localParticipant.person.displayName);
+
+    http.send();
 }
 
 function updateStateUi(state) {
@@ -93,12 +93,7 @@ function updateStateUi(state) {
 
 function updateParticipantsUi(participants) {
   console.log('Participants count: ' + participants.length);
-  //var tutorEmail = participants[0].person.emails[0].value;
-   // console.log(tutorEmail);
-
-  var participantsListElement = document.getElementById('participants');
-  setText(participantsListElement, participants.length.toString());
-
+  $('#participants').html(participants.length.toString());
 }
 
 

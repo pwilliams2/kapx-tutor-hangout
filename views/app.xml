@@ -54,7 +54,7 @@
                                 </thead>
                             </table>
                            <p style="margin-top:5px">
-                                <input id="get-selections" class="btn btn-info" type="submit" value="Submit">
+                                <input id="get-selections" class="btn btn-info" type="button" value="Submit">
                            </p>
                            <p id="message"></p>
                         </div>
