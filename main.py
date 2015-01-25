@@ -19,13 +19,13 @@ import json
 import logging
 
 import webapp2
+import tutor_hangouts_api as hapi
 from google.appengine.ext import ndb
 
 from apiclient import discovery
 
 from models.models import HangoutSubjects, TutorHangoutSessions, TutorSubjects
-from utils import JSONEncoder, autolog
-import tutor_hangouts_api as hapi
+from utils import JSONEncoder, autolog, LogPage
 
 
 SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'subjects_root')
@@ -77,12 +77,16 @@ class BaseHandler(webapp2.RequestHandler):
         # Set the cross origin resource sharing header to allow AJAX
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
 
+    def post(self):
+        # Set the cross origin resource sharing header to allow AJAX
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+
     def handle_exception(self, exception, debug):
         # Log the error.
         logging.exception(exception)
 
         # Set a custom message.
-        self.response.write('An error occurred.')
+        self.response.write('An error occurred: %s' % (exception))
 
         # If the exception is a HTTPException, use its error code.
         # Otherwise use a generic 500 error code.
@@ -104,48 +108,41 @@ class PingHandler(BaseHandler):
 
 
 class PublishHandler(BaseHandler):
-    def get(self):
-        self.update_subject()
-        # self.update_tutor()
-        self.response.out.write('updated')
+    def post(self):
+        BaseHandler.post(self)
+        # TODO: Update the TutorSubjects ndb, then use that to update the HangoutSubjects
+        self.update_tutor()
 
-    def update_subject(self):
-        autolog("updating subject")
-
+    def update_tutor(self):
         # Build a service object for interacting with the API.
         discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
         service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
 
-        subjects = self.request.get('subjects')
-        sel_subjects = json.loads(subjects)
-        json.dumps(sel_subjects, sort_keys=True, indent=4, encoding="utf-8")
+        tutor_body = {
+            "person_id": self.request.get('pid'),
+            "tutor_name": self.request.get('pName'),
+            "gid": self.request.get('gid'),
+            "subjects": self.request.get('subjects')
+        }
 
-        for ho_subject in sel_subjects:  # Get selected tutor subject(s)
-            json_obj = json.loads(JSONEncoder().encode(ho_subject))
-            input_subject = json_obj['subject']
-            state = json_obj['state']  # boolean for subject availability
-            # logging.info('subject: {s}, state {s}', (json_obj['subject'], json_obj['state']))
+        entity_key = self.request.get('entityKey')
 
-            # Find the existing subject and update it's availability to TRUE
-            subjects_list = HangoutSubjects.query(ancestor=SUBJECTS_PARENT_KEY).filter(
-                HangoutSubjects.subject == input_subject).fetch()
+        if not entity_key:
+            ts_list = TutorSubjects.query(TutorSubjects.person_id == self.request.get('pid')).fetch(1, keys_only=True)
 
-            for subject in subjects_list:
-                response = service.subjects().insert(from_datastore=True, subject=subject, isAvailable=state).execute()
-                # autolog(response.get('item',[]))
-                # subject.isAvailable = state
-                # subject.put()
-                print 'here'
+            if ts_list:  # Found an existing tutor person_id
+                entity_key = ts_list[0].urlsafe()
+            #if ts_key:
+            #    entity_key = ts_key.urlsafe()
 
+        if entity_key:
+            autolog("Updating tutor subject")
+            output = service.tutor_subjects().update(entityKey=entity_key, body=tutor_body).execute()
+        else:
+            autolog("New tutor")
+            output = service.tutor_subjects().insert(body=tutor_body).execute()
 
-    def update_tutor(self):
-        autolog("updating tutor subject")
-        tutor = TutorSubjects(parent=TUTOR_SUBJECTS_PARENT_KEY)
-        tutor.subjects = self.request.get('subjects')
-        tutor.person_id = self.request.get('pid')
-        tutor.name = self.request.get('pName')
-        tutor.gid = self.request.get('gid')
-        tutor.put()
+        self.response.out.write(JSONEncoder().encode(output))
 
 
 class SubscribeHandler(BaseHandler):
@@ -165,34 +162,12 @@ class SubjectsHandler(BaseHandler):
         # self.response.headers.add_header("Access-Control-Allow-Origin", "*")
 
         # Build a service object for interacting with the API.
-        # discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % \
-        # (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
-        #
-        # service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
-        #
-        # response = service.subjects().list(order='subject').execute()
-        # if response:
-        #     return response.get('items', [])
-        # else:
-        #     autolog("no subjects found")
-        #     return [{}]
-
-        subjects = self.get_subjects()
-
-        if not subjects:
-            load(self)  # hydrate subject model
-            subjects = self.get_subjects()
-
-        self.response.out.write(JSONEncoder().encode(subjects))
-
-    def get_subjects(self):
-        # Build a service object for interacting with the API.
         discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
         service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
 
-        response = service.subjects().list(order='subject').execute()
-        if response:
-            return response.get('items', [])
+        subjects = service.subjects().list(order='subject').execute()
+        if subjects:
+            return self.response.out.write(JSONEncoder().encode(subjects))
         else:
             autolog("no subjects found")
             return [{}]
@@ -201,7 +176,8 @@ class SubjectsHandler(BaseHandler):
 application = webapp2.WSGIApplication([
                                           ('/', SubjectsHandler),
                                           ('/publishsubjects', PublishHandler),
-                                          ('/heartbeat', PingHandler)
+                                          ('/heartbeat', PingHandler),
+                                          ('/logs', LogPage),
                                       ], debug=True)
 
 application.error_handlers[404] = handle_404
