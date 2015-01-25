@@ -1,10 +1,12 @@
+import logging
+
 __author__ = 'pwilliams'
 
 import endpoints
 
 import protorpc
 
-from models.models import HangoutSubjects, TutorSubjects, TutorHangoutSessions
+from models.models import HangoutSubjects, TutorSubjects
 import main
 
 
@@ -25,48 +27,73 @@ class TutorHangoutsApi(protorpc.remote.Service):
 
 
     @HangoutSubjects.method(name="subjects.insert", path="/subjects", http_method="POST")
-    def hangoutsubjects_insert(self, request):
+    def hangout_subjects_insert(self, request):
         """ Insert / Update a Hangout Subject """
         if request.from_datastore:
             hangout_subject = request
         else:
             hangout_subject = HangoutSubjects(parent=main.SUBJECTS_PARENT_KEY,
                                               subject=request.subject,
-                                              isAvailable=request.state)
+                                              is_available=request.state)
 
         hangout_subject.put()
         return hangout_subject
 
-    @HangoutSubjects.method(request_fields=("entityKey",), name="subjects.delete", path="/subjects/{entityKey}",
+    @HangoutSubjects.method(request_fields=("id",), name="subjects.delete", path="/subjects/{id}",
                             http_method="DELETE")
-    def hangoutsubjects_delete(self, request):
+    def hangout_subjects_delete(self, request):
         """ Delete a Hangout Subject, if exists """
         if not request.from_datastore:
             raise endpoints.NotFoundException("Hangout subject to be deleted was not found")
 
         request.key.delete()
-        return HangoutSubjects(quote="delete")
 
-    # @TutorSubjects.query_method(query_fields=("limit", "order", "pageToken"), name="tutor-subjects.list",
-    #                             path="/tutor-subjects", http_method="GET")
-    # def tutor_subjects_list(self, query):
-    #     """ Get the Tutor Subjects """
-    #     return query
-    #
-    # @TutorSubjects.method(name="tutor-subjects.insert", path="/tutor-subjects/{entityKey}", http_method="POST")
-    # def tutor_subjects_insert(self, request):
-    #     """ Insert / Update the Tutors and subjects """
-    #     if request.from_datastore:
-    #         tutor_subjects = request
-    #     else:
-    #         tutor_subjects = TutorSubjects(parent=main.TUTOR_SUBJECTS_PARENT_KEY,
-    #                                        person_id=request.pid,
-    #                                        subjects=request.subjects,
-    #                                        tutor_name=request.pName,
-    #                                        gid=request.gid)
-    #     tutor_subjects.put()
-    #     return tutor_subjects
 
+    @TutorSubjects.query_method(query_fields=("entityKey", "limit", "order", "pageToken"),
+                                name="tutor_subjects.list",
+                                path="/tutorsubjects", http_method="GET")
+    def tutor_subjects_list(self, query):
+        """ Get the Tutor Subjects """
+        return query
+
+    @TutorSubjects.method(name="tutor_subjects.insert", path="/tutorsubjects", http_method="POST")
+    def tutor_subjects_insert(self, request):
+        """ Insert the Tutor subjects """
+
+        logging.info("endpoint tutor subjects insert")
+        tutor_subjects = TutorSubjects(parent=main.TUTOR_SUBJECTS_PARENT_KEY,
+                                       person_id=request.person_id,
+                                       subjects=request.subjects,
+                                       tutor_name=request.tutor_name,
+                                       gid=request.gid)
+
+        tutor_subjects.put()
+        return tutor_subjects
+
+
+    @TutorSubjects.method(name="tutor_subjects.update", path="/tutorsubjects/{entityKey}",
+                          http_method="POST")
+    def tutor_subjects_update(self, request):
+        """  Update the Tutor subjects """
+
+        logging.info("endpoint tutor subjects update")
+        if not request.from_datastore:
+            raise endpoints.NotFoundException('Tutor Subject for update not found.')
+
+        logging.info('entity_keys %s' % request.entityKey)
+        ts = request
+        ts.put()
+        return ts
+
+    @TutorSubjects.method(request_fields=("entityKey",), name="tutor_subjects.delete", path="/tutorsubjects/{entityKey}",
+                            http_method="DELETE")
+    def tutor_subjects_delete(self, request):
+        """ Delete a Hangout Subject, if exists """
+        if not request.from_datastore:
+            raise endpoints.NotFoundException("Tutor subject to be deleted was not found.")
+
+        request.key.delete()
+        return TutorSubjects(gid="deleted")
 
 app = endpoints.api_server([TutorHangoutsApi], restricted=False)
 
