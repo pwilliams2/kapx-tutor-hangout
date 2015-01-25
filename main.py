@@ -113,6 +113,15 @@ class PublishHandler(BaseHandler):
         # TODO: Update the TutorSubjects ndb, then use that to update the HangoutSubjects
         self.update_tutor()
 
+    def get_entity_key(self):
+        entity_key = self.request.get('entityKey')
+        if not entity_key:
+            ts_list = TutorSubjects.query(TutorSubjects.person_id == self.request.get('pid')).fetch(1, keys_only=True)
+
+            if ts_list:  # Found an existing tutor person_id
+                entity_key = ts_list[0].urlsafe()
+        return entity_key
+
     def update_tutor(self):
         # Build a service object for interacting with the API.
         discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
@@ -125,15 +134,7 @@ class PublishHandler(BaseHandler):
             "subjects": self.request.get('subjects')
         }
 
-        entity_key = self.request.get('entityKey')
-
-        if not entity_key:
-            ts_list = TutorSubjects.query(TutorSubjects.person_id == self.request.get('pid')).fetch(1, keys_only=True)
-
-            if ts_list:  # Found an existing tutor person_id
-                entity_key = ts_list[0].urlsafe()
-            #if ts_key:
-            #    entity_key = ts_key.urlsafe()
+        entity_key = self.get_entity_key()
 
         if entity_key:
             autolog("Updating tutor subject")
