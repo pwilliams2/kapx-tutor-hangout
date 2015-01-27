@@ -29,12 +29,24 @@ class TutorHangoutsApi(protorpc.remote.Service):
     @HangoutSubjects.method(name="subjects.insert", path="/subjects", http_method="POST")
     def hangout_subjects_insert(self, request):
         """ Insert / Update a Hangout Subject """
-        if request.from_datastore:
-            hangout_subject = request
-        else:
-            hangout_subject = HangoutSubjects(parent=main.SUBJECTS_PARENT_KEY,
-                                              subject=request.subject,
-                                              is_available=request.state)
+        logging.info("Hangout Subjects Insert")
+        hangout_subject = HangoutSubjects(parent=main.SUBJECTS_PARENT_KEY,
+                                          subject=request.subject,
+                                          is_available=request.is_available)
+
+        hangout_subject.put()
+        return hangout_subject
+
+    @HangoutSubjects.method(name="subjects.update", path="/subjects/{entityKey}", http_method="POST")
+    def hangout_subjects_update(self, request):
+        """ Insert / Update a Hangout Subject """
+
+        logging.info("Hangout Subjects update")
+        if not request.from_datastore:
+          raise endpoints.NotFoundException('Tutor Subject for update not found.')
+
+        logging.info('entity_keys %s' % request.entityKey)
+        hangout_subject = request
 
         hangout_subject.put()
         return hangout_subject
