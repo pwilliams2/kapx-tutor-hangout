@@ -14,24 +14,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 import json
-import logging
 
+import logging
+import os
+
+import jinja2
 import webapp2
-import tutor_hangouts_api as hapi
 from google.appengine.ext import ndb
 
+import tutor_hangouts_api as hapi
 from apiclient import discovery
-
 from models.models import HangoutSubjects, TutorHangoutSessions, TutorSubjects
-from utils import JSONEncoder, autolog, LogPage
+from utils import JSONEncoder, autolog, LogPage, PingHandler
 
 
 SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'subjects_root')
 TUTOR_SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'tutor_subjects_root')
 TUTOR_SESSIONS_PARENT_KEY = ndb.Key("Entity", 'tutor_sessions_root')
 
+# Jinja environment instance necessary to use Jinja views.
+jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
+                               autoescape=True)
 
 def handle_404(request, response, exception):
     logging.exception(exception)
@@ -73,6 +77,8 @@ def load(self):
 
 
 class BaseHandler(webapp2.RequestHandler):
+    pass
+
     def get(self):
         # Set the cross origin resource sharing header to allow AJAX
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
@@ -80,6 +86,7 @@ class BaseHandler(webapp2.RequestHandler):
     def post(self):
         # Set the cross origin resource sharing header to allow AJAX
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+
 
     def handle_exception(self, exception, debug):
         # Log the error.
@@ -96,24 +103,15 @@ class BaseHandler(webapp2.RequestHandler):
             self.response.set_status(500)
 
 
-class PingHandler(BaseHandler):
-    def get(self):
-        # Set the cross origin resource sharing header to allow AJAX
-        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
-
-        autolog("Pinghandler")
-
-        # Print some JSON
-        self.response.out.write('{"PingHandler":"Alive..."}\n')
 
 
 class PublishHandler(BaseHandler):
     def post(self):
         BaseHandler.post(self)
-        # TODO: Update the TutorSubjects ndb, then use that to update the HangoutSubjects
-        self.update_tutor()
+        # self.update_tutor()
+        self.update_subjects()
 
-    def get_entity_key(self):
+    def get_tutor_subjects_entity_key(self):
         entity_key = self.request.get('entityKey')
         if not entity_key:
             ts_list = TutorSubjects.query(TutorSubjects.person_id == self.request.get('pid')).fetch(1, keys_only=True)
@@ -121,6 +119,59 @@ class PublishHandler(BaseHandler):
             if ts_list:  # Found an existing tutor person_id
                 entity_key = ts_list[0].urlsafe()
         return entity_key
+
+    def update_subjects(self):
+        '''
+        Update the subjects table to reflect the availability of the current tutor
+        :return:
+        '''
+
+        # Build a service object for interacting with the API.
+        discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
+        service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
+
+        # Retrieve Available Tutors and their subjects
+        avail_tutors_list = service.tutor_subjects().list().execute()
+        subjects_list = service.subjects().list().execute()
+        subjects = subjects_list['items']
+        avail_tutors = avail_tutors_list['items']
+        avail_subjects = []
+        entity_key = ''
+
+        for tutor in avail_tutors:
+            json_tutors = json.loads(tutor['subjects'])
+            subject = json_tutors[0]['subject']
+            avail_subjects.append(subject)
+
+        for avail_subject in avail_subjects:
+            for subject in subjects:
+                is_avail = True if (avail_subject == subject['subject']) else False
+                hs_body = {
+                    "subject": subject['subject'],
+                    "is_available": is_avail
+                }
+                service.subjects().update(entityKey=entity_key,body=hs_body).execute()
+
+            # for sub in json_subs:
+            #     print sub['subject']
+            # print item['subjects']
+            # subs = JSONEncoder().encode(subject)
+            # print subs
+        # subjects_list = json.loads(self.request.get('subjects'))
+        #
+        # for row in subjects_list:
+        #     subject = row['subject']
+        #     hs_list = HangoutSubjects.query(HangoutSubjects.subject == subject).fetch(1, keys_only=True)
+        #     if hs_list:
+        #         entity_key = hs_list[0].urlsafe()
+        #         subject_body = {
+        #             "is_available": True,
+        #             "gid": self.request.get('gid'),
+        #             "subject": subject
+        #         }
+        #         output = service.subjects().update(entityKey=entity_key,body=subject_body).execute()
+        #         self.response.out.write(JSONEncoder().encode(output))
+
 
     def update_tutor(self):
         # Build a service object for interacting with the API.
@@ -134,7 +185,7 @@ class PublishHandler(BaseHandler):
             "subjects": self.request.get('subjects')
         }
 
-        entity_key = self.get_entity_key()
+        entity_key = self.get_tutor_subjects_entity_key()
 
         if entity_key:
             autolog("Updating tutor subject")
@@ -174,12 +225,19 @@ class SubjectsHandler(BaseHandler):
             return [{}]
 
 
-application = webapp2.WSGIApplication([
-                                          ('/', SubjectsHandler),
-                                          ('/publishsubjects', PublishHandler),
-                                          ('/heartbeat', PingHandler),
-                                          ('/logs', LogPage),
-                                      ], debug=True)
 
-application.error_handlers[404] = handle_404
-application.error_handlers[500] = handle_500
+class MainPage(BaseHandler):
+    def get(self):
+        # subjects = self.get_subjects()
+        template = jinja_env.get_template("templates/index.html")
+        self.response.out.write(template.render({}))
+
+app = webapp2.WSGIApplication([
+                              ('/', MainPage),
+                              ('/publishsubjects', PublishHandler),
+                              ('/heartbeat', PingHandler),
+                              ('/logs', LogPage),
+                          ], debug=True)
+
+app.error_handlers[404] = handle_404
+app.error_handlers[500] = handle_500
