@@ -16,8 +16,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-var serverPath = '//kx-tutor-hangout-app.appspot.com/';
+var SERVER_PATH = '//kx-tutor-hangout-app.appspot.com/';
 var hangoutURL = '';
+var gid ='';
 var localParticipant;
 
 // The functions triggered by the buttons on the Hangout App
@@ -53,10 +54,30 @@ function setText(element, text) {
 
 function getSubmitClick(subjects) {
     console.log('Selected subject' + subjects);
-
     var arr = hangoutURL.split('/');
-    var gid = arr[arr.length - 1];
+    gid = arr[arr.length - 1];
 
+    var payload = 'subjects=' + subjects
+    + '&gid=' + gid
+    + '&pid=' + localParticipant.person.id
+    + '&pName=' + localParticipant.person.displayName
+
+    httpRequest('POST', SERVER_PATH + 'publishsubjects', payload);
+
+    //http.open('POST', SERVER_PATH + 'publishsubjects');
+    //http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    //http.send('subjects=' + subjects
+    //+ '&gid=' + gid
+    //+ '&pid=' + localParticipant.person.id
+    //+ '&pName=' + localParticipant.person.displayName);
+
+}
+
+
+function httpRequest(method, path, params)
+{
+	console.log('method: ' + method + ' path: ' + path + ' params: ' + params);
+	
     var http = new XMLHttpRequest();
     http.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
@@ -70,17 +91,17 @@ function getSubmitClick(subjects) {
             console.log("statusText: " + http.responseText)
         }
     }
-    http.open('POST', serverPath + 'publishsubjects');
-    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    http.send('subjects=' + subjects
-    + '&gid=' + gid
-    + '&pid=' + localParticipant.person.id
-    + '&pName=' + localParticipant.person.displayName);
-
-    console.log('subjects=' + subjects
-    + '&gid=' + gid
-    + '&pid=' + localParticipant.person.id
-    + '&pName=' + localParticipant.person.displayName);
+    if (method && method.toUpperCase() == "GET") {
+        //e.g. SERVER_PATH/subscribe?params
+        //sample params == gid="gasdfsfsfssdfdsfs"
+        http.open('GET', SERVER_PATH + path + '?' + params );
+    }
+    else if ((method && method.toUpperCase() == "POST")) {
+        http.open('POST', SERVER_PATH + 'publishsubjects');
+        http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        http.send(params);
+    }
+    
 }
 
 function updateStateUi(state) {
@@ -97,17 +118,16 @@ function updateStateUi(state) {
 
 function updateParticipantsUi(participants) {
     console.log('Participants count: ' + participants.length);
-    $('#participants').html(participants.length.toString());
 
-    // For now, assume that if there is a participant, you are
+    var clientParticipant = gapi.hangout.getLocalParticipant();
+    $('#clientParticipant').html(clientParticipant.person.displayName);
+
+    hangoutURL = gapi.hangout.getHangoutUrl();
+    var arr = hangoutURL.split('/');
+    gid = arr[arr.length - 1];
+
     if (participants.length > 1) {
-        $('#tutor-view').addClass('hidden');
-        $('#student-view').removeClass('hidden');
-    }
-    else
-    {
-        $('#tutor-view').removeClass('hidden');
-        $('#student-view').addClass('hidden');
+        httpRequest('GET','subscribe','gid=' + gid);
     }
 }
 
@@ -124,12 +144,16 @@ function init() {
             console.log('hangoutUrl: ' + hangoutURL);
 
             localParticipant = gapi.hangout.getLocalParticipant();  //TutorSubjects
-            $('#localParticipant').html(localParticipant.person.displayName);
+            $('#instructor').html(localParticipant.person.displayName);
 
-			console.log('setup view');
- 			$('#tutor-view').removeClass('hidden');
-        	$('#student-view').addClass('hidden');
-        	
+            var startData = gapi.hangout.getStartData();
+            console.log('start_data: ' + startData);
+
+            if (startData && startData.length > 1) {
+                $('#tutor-view').removeClass('hidden');
+                $('#student-view').addClass('hidden');
+            }
+
             gapi.hangout.data.onStateChanged.add(function (eventObj) {
                 updateStateUi(eventObj.state);
             });
