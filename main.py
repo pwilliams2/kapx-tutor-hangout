@@ -150,32 +150,25 @@ class PublishHandler(BaseHandler):
 
         done = []  # Subjects that are already updated.
         for avail_subject in avail_subjects:
-            # print '***** avail_subject: %s *******' % avail_subject
             for subject in subjects_list:
-                is_available = False
                 subject_key = subject.key.urlsafe()
 
                 if subject.subject in done:
                     continue
 
                 if avail_subject == subject.subject:
-                    print 'avail_subject == %s' % subject.subject
                     subject.gid = self.request.get('gid')
-                    # subject.is_available = True
-                    is_available = True
+                    subject.is_available = True
+
                     if avail_subject not in done:
                         done.append(avail_subject)
-
-                    print done
                 else:
-                    print 'subject %s != avail_subject %s' % (subject.subject, avail_subject)
                     subject.is_available = False
-                    subject.gid = None
+                    subject.gid = ''
 
                 hs_body = {
                     "subject": subject.subject,
-                    "is_available": is_available,
-                    "image_url": subject.image_url,
+                    "is_available": subject.is_available,
                     "gid": subject.gid
                 }
 

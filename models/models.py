@@ -15,6 +15,7 @@ class TutorSubjects(EndpointsModel):
     gid = ndb.StringProperty()
 
 class TutorHangoutSessions(EndpointsModel):
+    _message_fields_schema = ('entityKey','person_id','subjects','gid','tutor_name','start', 'end')
     person_id = ndb.StringProperty()
     subjects = ndb.StringProperty()
     gid = ndb.StringProperty()
@@ -23,6 +24,7 @@ class TutorHangoutSessions(EndpointsModel):
     end = ndb.DateTimeProperty(indexed=False)
 
 class HangoutSubjects(EndpointsModel):
+    _message_fields_schema = ('entityKey','subject','is_available','last_modified','gid', 'image_url')
     subject = ndb.StringProperty()
     is_available = ndb.BooleanProperty(indexed=False)
     last_modified = ndb.DateTimeProperty(auto_now=True)

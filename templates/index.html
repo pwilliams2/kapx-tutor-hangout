@@ -1,38 +1,22 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<Module>
-    <!-- /*
- * Copyright (c) 2011 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy
- * of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */ -->
-  <ModulePrefs title="KAPx Tutor App">
-    <Require feature="rpc"/>
-  </ModulePrefs>
-  <Content type="html">
-      <![CDATA[
 <!DOCTYPE html>
-<!-- The hangout API JavaScript. Always include this first -->
-<head>
-    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/boilerplate.min.css">
-    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/bootstrap-table.min.css">
-    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/bootstrap-spinedit.css" />
-    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/main.css" />
-    <script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>
-<head>
-<body style="background-color:white">
 
-  <div class="container">
-    <div class="hidden" style="margin-left: 5px" id="tutor-view">
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+    <!--<link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/boilerplate.min.css">-->
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-spinedit.css"/>
+    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/main.css"/>
+    <script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>
+    <title>KX Hangout</title>
+</head>
+<body style="background-color:white">
+<div class="container">
+    <div style="margin-left: 5px" id="tutor-view">
         <div class="well well-sm" style="width: 250px;height:60px;">
 
             <p><b>Instructor: </b><span id="localParticipant"></span></p>
@@ -122,18 +106,19 @@
         </div>
     </div>
 </div>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
-    <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-spinedit.js"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+<script src="js/bootstrap-spinedit.js"></script>
 
 <!-- The JavaScript for this app. This must always be a full URL not a
      relative path.
      Tip: You can load it from a local web server such as
      http://localhost/app.js for faster single user development -->
 
-    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.05"></script>
-    <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
-</body>
+<!--<script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.01"></script>-->
+<script src="js/app.js?v=1.03"></script>
+<script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
 
-]]></Content>
-</Module>
+</body>
+</html>

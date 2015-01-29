@@ -10,6 +10,7 @@ from models.models import HangoutSubjects, TutorSubjects
 import main
 
 
+# API_ROOT = 'http://localhost:8080/_ah/api'
 API_ROOT = 'https://kx-tutor-hangout-app.appspot.com/_ah/api'
 API_NAME = 'tutorhangouts'
 VERSION = 'v1'
@@ -32,20 +33,20 @@ class TutorHangoutsApi(protorpc.remote.Service):
         logging.info("Hangout Subjects Insert")
         hangout_subject = HangoutSubjects(parent=main.SUBJECTS_PARENT_KEY,
                                           subject=request.subject,
-                                          is_available=request.is_available)
+                                          is_available=request.is_available,
+                                          gid=request.gid)
 
         hangout_subject.put()
         return hangout_subject
 
     @HangoutSubjects.method(name="subjects.update", path="/subjects/{entityKey}", http_method="POST")
     def hangout_subjects_update(self, request):
-        """ Insert / Update a Hangout Subject """
+        """ Update a Hangout Subject """
 
-        logging.info("Hangout Subjects update")
         if not request.from_datastore:
           raise endpoints.NotFoundException('Tutor Subject for update not found.')
 
-        logging.info('entity_keys %s' % request.entityKey)
+        logging.info('Hangout Subjects update, entity_key %s' % request.entityKey)
         hangout_subject = request
 
         hangout_subject.put()

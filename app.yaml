@@ -20,7 +20,7 @@ handlers:
   script: tutor_hangouts_api.app
 
 - url: /.*
-  script: main.application
+  script: main.app
 
 
 libraries:
@@ -28,4 +28,5 @@ libraries:
   version: "2.5.2"
 - name: endpoints
   version: 1.0
-
+- name: jinja2
+  version: 2.6
