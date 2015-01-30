@@ -35,9 +35,9 @@
     <div class="hidden" style="margin-left: 5px" id="tutor-view">
         <div class="well well-sm" style="width: 250px;height:60px;">
 
-            <p><b>Instructor: </b><span id="localParticipant"></span></p>
+            <p><b>Instructor: </b><span class="instructor"></span></p>
 
-            <p><b>Student: </b><span id="studentParticipant"></span></p>
+            <p><b>Student: </b><span class="clientParticipant"></span></p>
 
         </div>
         <div class="row clearfix">
@@ -68,9 +68,7 @@
     <div class="row clearfix" style="margin-left: 5px" id="student-view">
         <div class="col-md-4 column">
             <div class="well well-sm" style="width: 250px;height:60px;">
-                <p><b>Instructor: </b><span id="localParticipant"></span></p>
-
-                <p><b>Student: </b><span id="studentParticipant"></span></p>
+                <p><b>Instructor: </b><span class="instructor"></span></p>
             </div>
             <p style="margin-top: 5px">
                 Please rate your tutor:
@@ -131,7 +129,7 @@
      Tip: You can load it from a local web server such as
      http://localhost/app.js for faster single user development -->
 
-    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.05"></script>
+    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.10"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
 </body>
 

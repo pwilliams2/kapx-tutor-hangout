@@ -92,8 +92,7 @@ function httpRequest(method, path, params)
         }
     }
     if (method && method.toUpperCase() == "GET") {
-        //e.g. SERVER_PATH/subscribe?params
-        //sample params == gid="gasdfsfsfssdfdsfs"
+        //e.g. path == "subscribe", params == gid="gasdfsfsfssdfdsfs"
         http.open('GET', SERVER_PATH + path + '?' + params );
     }
     else if ((method && method.toUpperCase() == "POST")) {
