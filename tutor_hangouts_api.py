@@ -1,4 +1,5 @@
 import logging
+from google.appengine.ext import ndb
 
 __author__ = 'pwilliams'
 
@@ -7,14 +8,15 @@ import endpoints
 import protorpc
 
 from models.models import HangoutSubjects, TutorSubjects
-import main
-
 
 # API_ROOT = 'http://localhost:8080/_ah/api'
 API_ROOT = 'https://kx-tutor-hangout-app.appspot.com/_ah/api'
 API_NAME = 'tutorhangouts'
 VERSION = 'v1'
 
+SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'subjects_root')
+TUTOR_SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'tutor_subjects_root')
+TUTOR_SESSIONS_PARENT_KEY = ndb.Key("Entity", 'tutor_sessions_root')
 
 @endpoints.api(name=API_NAME, version=VERSION, description="Tutor Hangout API")
 class TutorHangoutsApi(protorpc.remote.Service):
@@ -31,7 +33,7 @@ class TutorHangoutsApi(protorpc.remote.Service):
     def hangout_subjects_insert(self, request):
         """ Insert / Update a Hangout Subject """
         logging.info("Hangout Subjects Insert")
-        hangout_subject = HangoutSubjects(parent=main.SUBJECTS_PARENT_KEY,
+        hangout_subject = HangoutSubjects(parent=SUBJECTS_PARENT_KEY,
                                           subject=request.subject,
                                           is_available=request.is_available,
                                           gid=request.gid)
@@ -74,7 +76,7 @@ class TutorHangoutsApi(protorpc.remote.Service):
         """ Insert the Tutor subjects """
 
         logging.info("endpoint tutor subjects insert")
-        tutor_subjects = TutorSubjects(parent=main.TUTOR_SUBJECTS_PARENT_KEY,
+        tutor_subjects = TutorSubjects(parent=TUTOR_SUBJECTS_PARENT_KEY,
                                        person_id=request.person_id,
                                        subjects=request.subjects,
                                        tutor_name=request.tutor_name,

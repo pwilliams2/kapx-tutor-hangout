@@ -15,11 +15,7 @@ from models.models import TutorHangoutSessions, TutorSubjects, HangoutSubjects
 # jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
 #                                autoescape=True)
 
-jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(os.path.dirname(__file__)) + '/templates'))
 
-SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'subjects_root')
-TUTOR_SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'tutor_subjects_root')
-TUTOR_SESSIONS_PARENT_KEY = ndb.Key("Entity", 'tutor_sessions_root')
 
 class PublishHandler(BaseHandler):
     def post(self):
@@ -142,6 +138,4 @@ class SubjectsHandler(BaseHandler):
 
 class MainPage(BaseHandler):
     def get(self):
-        # subjects = self.get_subjects()
-        template = jinja_env.get_template("index.html")
-        self.response.out.write(template.render({}))
+        self.render_template('templates/index.html')

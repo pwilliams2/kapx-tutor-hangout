@@ -8,6 +8,7 @@
     <!--<link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/boilerplate.min.css">-->
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
+   <link rel="stylesheet" href="css/bootstrap.css">
     <link rel="stylesheet" href="css/bootstrap-spinedit.css"/>
     <link rel="stylesheet" href="css/bootstrap-table.min.css">
     <link rel="stylesheet" href="css/main.css"/>
@@ -15,83 +16,85 @@
     <title>KX Hangout</title>
 </head>
 <body style="background-color:white">
-<div class="container">
-    <div style="margin-left: 5px" id="tutor-view">
-        <div class="well well-sm" style="width: 250px;height:60px;">
-
+<div class="container" id="tutor-view" style="width: 300px">
+    <div class="row well well-sm">
+        <div>
             <p><b>Instructor: </b><span id="instructor"></span></p>
 
             <p><b>Student: </b><span id="clientParticipant"></span></p>
 
         </div>
-        <div class="row">
-            <div class="col-md-2 column" style="width:280px">
-                <p>Please select tutoring subject(s):</p>
+    </div>
+    <div class="row">
+        <div>
+            <p class="lead">Select tutoring subject(s):</p>
 
-                <div>
-                    <table id="subjectTable" class="table" data-toggle="table"
-                           data-height="280" data-width="20"
-                           data-click-to-select="true">
-                        <thead>
-                        <tr>
-                            <th data-field="state" data-checkbox="true"></th>
-                            <th data-field="subject">Subject</th>
-                        </tr>
-                        </thead>
-                    </table>
-                    <p style="margin-top:5px">
-                        <input id="btn-subjects" class="btn btn-primary" type="button" value="Submit">
-                    </p>
+            <div>
+                <table id="subjectTable" class="table" data-toggle="table"
+                       data-height="280" data-width="20"
+                       data-click-to-select="true">
+                    <thead>
+                    <tr>
+                        <th data-field="state" data-checkbox="true"></th>
+                        <th data-field="subject">Subject</th>
+                    </tr>
+                    </thead>
+                </table>
+                <p style="margin-top:5px">
+                    <input id="btn-subjects" class="btn btn-primary" type="button" value="Submit">
+                </p>
 
-                    <p id="message"></p>
-                </div>
+                <p id="message"></p>
             </div>
         </div>
     </div>
-    <div class="row" style="margin-left: 5px" id="student-view">
-        <div class="col-md-4 column">
-            <div class="well well-sm" style="width: 250px;height:60px;">
-                <p><b>Instructor: </b><span id="instructor"></span></p>
+</div>
+<div class="container" id="student-view" style="width: 300px">
+    <div class="row well well-sm">
+        <div>
+            <p><b>Instructor: </b><span id="instructor"></span></p>
 
-                <p><b>Student: </b><span id="clientParticipant"></span></p>
-            </div>
-            <p style="margin-top: 5px">
+            <p><b>Student: </b><span id="clientParticipant"></span></p>
+        </div>
+    </div>
+    <div class="row">
+        <div id="tutor-rating">
+            <p class="lead" style="margin-top: 5px">
                 Please rate your tutor:
             </p>
 
-            <div class="col-md-4 column" id="tutor-rating">
-                <table>
-                    <tr>
-                        <td>Knowledgable</td>
-                        <td><input type="text" id="spinknow" class="aSpinEdit spinedit"/>
+            <table style="width: 250px">
+                <tr>
+                    <td>Knowledgable</td>
+                    <td><input type="text" id="spinknow" class="aSpinEdit spinedit"/>
 
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Communications</td>
-                        <td>
-                            <input type="text" id="spincomm" class="aSpinEdit spinedit noSelect"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Communications</td>
+                    <td>
+                        <input type="text" id="spincomm" class="aSpinEdit spinedit noSelect"/>
 
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Overall</td>
-                        <td>
-                            <input type="text" id="spinall" class="aSpinEdit spinedit noSelect"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Overall</td>
+                    <td>
+                        <input type="text" id="spinall" class="aSpinEdit spinedit noSelect"/>
 
-                        </td>
-                    </tr>
-                </table>
+                    </td>
+                </tr>
+            </table>
 
-                <p style="margin-top: 5px">
-                    <textarea row="3" cols="27" placeholder="Comments"></textarea>
-                </p>
+            <p style="margin-top: 5px;">
+                <textarea row="3" cols="40" placeholder="Comments"></textarea>
+            </p>
 
-                <p style="margin-top:5px">
-                    <input id="btn-survey" class="btn btn-primary" type="button" value="Submit">
-                </p>
-            </div>
+            <p style="margin-top:5px">
+                <input id="btn-survey" class="btn btn-primary" type="button" value="Submit">
+            </p>
         </div>
+
     </div>
 </div>
 
@@ -108,42 +111,42 @@
 <!--<script src="js/app.js?v=1.03"></script>-->
 <script>
     $(function () {
-	    $('.aSpinEdit').spinedit({
+        $('.aSpinEdit').spinedit({
             minimum: 0,
-	        maximum: 5,
-	        step: 0.25,
+            maximum: 5,
+            step: 0.25,
             value: 3.0,
-	        numberOfDecimals: 2
-	    });
+            numberOfDecimals: 2
+        });
 
         console.log('loading sknow');
-	    $('#spinknow').spinedit({
-	        minimum: 0,
-	        maximum: 5,
-	        step: 0.25,
-	        numberOfDecimals: 2
-	    });
+        $('#spinknow').spinedit({
+            minimum: 0,
+            maximum: 5,
+            step: 0.25,
+            numberOfDecimals: 2
+        });
 
         console.log('loading skcomm');
         $('#spincomm').spinedit({
-	        minimum: 0,
-	        maximum: 5,
-	        step: 0.25,
-	        numberOfDecimals: 2
-	    });
+            minimum: 0,
+            maximum: 5,
+            step: 0.25,
+            numberOfDecimals: 2
+        });
 
         console.log('loading skall');
         $('#spinall').spinedit({
-	        minimum: 0,
-	        maximum: 5,
-	        step: 0.25,
-	        numberOfDecimals: 2
-	    });
+            minimum: 0,
+            maximum: 5,
+            step: 0.25,
+            numberOfDecimals: 2
+        });
 
-		$('.aSpinEdit').on("valueChanged", function (e) {
-			console.log(e.value);
-		});
-});
+        $('.aSpinEdit').on("valueChanged", function (e) {
+            console.log(e.value);
+        });
+    });
 </script>
 </body>
 </html>
