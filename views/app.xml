@@ -114,7 +114,7 @@
                 </p>
 
                 <p style="margin-top:5px">
-                    <input id="btn-survey" class="btn btn-info" type="button" value="Submit">
+                    <input id="btn-survey" class="btn btn-primary" type="button" value="Submit">
                 </p>
             </div>
         </div>
