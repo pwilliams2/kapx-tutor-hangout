@@ -15,6 +15,13 @@ handlers:
 - url: /css
   static_dir: static/css
 
+
+- url: /fonts
+  static_dir: static/fonts
+
+- url: /img
+  static_dir: static/img
+
 # Endpoints handler
 - url: /_ah/spi/.*
   script: tutor_hangouts_api.app

@@ -1,0 +1,101 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<title>SpinEdit Demo</title>
+	<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="css/bootstrap-spinedit.css">
+    <link rel="stylesheet" type="text/css" href="css/demo.css">
+	<script type='text/javascript' src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+	<script type='text/javascript' src="js/bootstrap.min.js"></script>
+	<script type='text/javascript' src="js/bootstrap-spinedit.js"></script>
+</head>
+
+<body>
+    <div class="container">
+	
+    <h2>SpinEdit Demo</h2>
+
+    <p>This demo pages shows the spinedit control used in the different Twitter Bootstrap form layouts.</p>
+
+    <form class="example default">
+    <fieldset>
+        <legend>Legend</legend>
+        <label>xxxx name</label>
+        <input type="text" id="spinEdit1" class="spinedit" />
+        <div class="spinedit">
+            <i class="icon-chevron-up glyphicon glyphicon-chevron-up"></i>
+            <i class="icon-chevron-down"></i>
+        </div>
+        <span class="help-block">Example block-level help text here.</span>
+        </fieldset>
+    </form>
+
+    <form class="form-search example search">
+    <fieldset>
+        <legend>Legend</legend>
+        <label>Label name</label>
+        <input type="text" id="spinEdit2" class="aSpinEdit" />
+        <button type="submit" class="btn">Search</button>
+        </fieldset>
+    </form>
+
+    <form class="form-inline example inline">
+      <input type="text" id="spinEdit3" class="aSpinEdit" />
+      <button type="submit" class="btn">Do Something</button>
+    </form>	   
+        
+   <form class="form-horizontal example horizontal">
+      <div class="control-group">
+        <label class="control-label" for="spinEdit4">Label name</label>
+        <div class="controls">
+            <input type="text" id="spinEdit4" class="aSpinEdit" />
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="controls">
+          <button type="submit" class="btn">Do Something</button>
+        </div>
+      </div>
+    </form>   	    
+
+    <form class="example decimals">
+        <input type="text" id="spinEdit5" />
+    </form>
+
+    </div>
+
+<script type="text/javascript">
+	$(function () {
+	    $('.spinedit').spinedit({
+			minimum: -10,
+			maximum: 50,
+			step: 1
+	    });
+	      $('.aSpinEdit').spinedit({
+			minimum: -10,
+			maximum: 50,
+			step: 1
+	    });
+
+	    $('#spinEdit5').spinedit({
+	        minimum: 0,
+	        maximum: 1,
+	        step: 0.1,
+	        numberOfDecimals: 2,
+            value: 0.10
+	    });
+
+	    $('#spinEdit5').on("valueChanged", function (e) {
+	        console.log(e.value);
+	    });
+
+		$('.aSpinEdit').on("valueChanged", function (e) {
+			console.log(e.value);
+		});
+	});
+</script>
+
+</body>
+</html>

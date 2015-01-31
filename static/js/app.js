@@ -199,34 +199,13 @@ $(function () {
 
 $(function () {
 	    $('.aSpinEdit').spinedit({
-			minimum: -10,
-			maximum: 50,
-			step: 1
+			minimum: 0,
+			maximum: 5,
+			step:.25,
+            value: 3,
+            numberOfDecimals: 2
 	    });
 
-        console.log('loading sknow');
-	    $('#spinknow').spinedit({
-	        minimum: 0,
-	        maximum: 5,
-	        step: 0.25,
-	        numberOfDecimals: 2
-	    });
-
-        console.log('loading skcomm');
-        $('#spincomm').spinedit({
-	        minimum: 0,
-	        maximum: 5,
-	        step: 0.25,
-	        numberOfDecimals: 2
-	    });
-
-        console.log('loading skall');
-        $('#spinall').spinedit({
-	        minimum: 0,
-	        maximum: 5,
-	        step: 0.25,
-	        numberOfDecimals: 2
-	    });
 
 		$('.aSpinEdit').on("valueChanged", function (e) {
 			console.log(e.value);
