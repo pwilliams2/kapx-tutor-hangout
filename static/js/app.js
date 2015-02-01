@@ -119,7 +119,7 @@ function updateParticipantsUi(participants) {
     console.log('Participants count: ' + participants.length);
 
     var clientParticipant = gapi.hangout.getLocalParticipant();
-    $('#clientParticipant').html(clientParticipant.person.displayName);
+    $('.clientParticipant').html(clientParticipant.person.displayName);
 
     hangoutURL = gapi.hangout.getHangoutUrl();
     var arr = hangoutURL.split('/');
@@ -143,7 +143,7 @@ function init() {
             console.log('hangoutUrl: ' + hangoutURL);
 
             localParticipant = gapi.hangout.getLocalParticipant();  //TutorSubjects
-            $('#instructor').html(localParticipant.person.displayName);
+            $('.instructor').html(localParticipant.person.displayName);
 
             var startData = gapi.hangout.getStartData();
             console.log('start_data: ' + startData);
