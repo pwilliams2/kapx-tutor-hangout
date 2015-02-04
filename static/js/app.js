@@ -141,7 +141,7 @@ function removeParticipantsUi(participants) {
     $('.clientParticipant').html("");
 }
 
-
+// Post a heartbeat to inform host that this tutor H-O is still available
 function heartBeat()
 {
     httpRequest('GET', 'heartbeat', 'gid=' + gid + '&pid=' + pid + "&count=" + count);

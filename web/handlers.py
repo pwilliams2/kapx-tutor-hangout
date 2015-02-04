@@ -1,49 +1,46 @@
 import json
+import datetime
 
 import tutor_hangouts_api as hapi
 from apiclient import discovery
 from utils import JSONEncoder, autolog
 from lib.base import BaseHandler
 from models.models import TutorSubjects, HangoutSubjects
+from google.appengine.ext import ndb
 
 
+def remove_stale_sessions():
+    """ When a tutor closes their H-O, we need to remove them from the available subjects """
 
-class PublishHandler(BaseHandler):
-    def post(self):
-        self.publish_tutor()
-        self.update_subjects()
+    now = datetime.datetime.now()
+    del_list = TutorSubjects.query().fetch()
+    keys = []
+    for item in del_list:
+        delta = now - item.last_modified
+        if delta.total_seconds() > 60:
+            keys.append(item.key)
 
-    def get_tutor_subjects_entity_key(self):
-        entity_key = self.request.get('entityKey')
-        if not entity_key:
-            ts_list = TutorSubjects.query(TutorSubjects.person_id == self.request.get('pid')).fetch(1, keys_only=True)
+    ndb.delete_multi(keys)
 
-            if ts_list:  # Found an existing tutor person_id
-                entity_key = ts_list[0].urlsafe()
-        return entity_key
 
-    def update_subjects(self):
-        '''
-        Update the subjects table to reflect the availability of the current tutor
-        :return:
-        '''
+def update_subjects():
+    '''Update the subjects table to reflect the availability of the current tutor'''
 
-        # Build a service object for interacting with the API.
-        discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
-        service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
+    discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
+    service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
 
-        subjects_list = HangoutSubjects.query().fetch()
+    subjects_list = HangoutSubjects.query().fetch()
 
-        # Retrieve Available Tutors and their subjects
-        avail_tutors_list = service.tutor_subjects().list().execute()
-        avail_tutors = avail_tutors_list['items']
-        avail_subjects = []
+    # Retrieve Available Tutors and their subjects
+    avail_tutors_list = service.tutor_subjects().list().execute()
+    avail_tutors = avail_tutors_list['items']
+    avail_subjects = []
 
-        for tutor in avail_tutors:
-            json_tutor_subjects = json.loads(tutor['subjects'])
-            for tutor_subject in json_tutor_subjects:
-                subject = tutor_subject['subject']
-                avail_subjects.append(subject)
+    for tutor in avail_tutors:
+        json_tutor_subjects = json.loads(tutor['subjects'])
+        for tutor_subject in json_tutor_subjects:
+            subject = tutor_subject['subject']
+            avail_subjects.append(subject)
 
         done = []  # Subjects that are already updated.
         for avail_subject in avail_subjects:
@@ -54,7 +51,7 @@ class PublishHandler(BaseHandler):
                     continue
 
                 if avail_subject == subject.subject:
-                    subject.gid = self.request.get('gid')
+                    subject.gid = tutor['gid']
                     subject.is_available = True
 
                     if avail_subject not in done:
@@ -69,11 +66,28 @@ class PublishHandler(BaseHandler):
                     "gid": subject.gid
                 }
 
-                print 'hs_body: %s: ' % json.loads(json.dumps(hs_body))
+                autolog('hs_body: %s: ' % json.loads(json.dumps(hs_body)))
                 service.subjects().update(entityKey=subject_key, body=hs_body).execute()
 
+
+class PublishHandler(BaseHandler):
+    def post(self):
+        self.publish_tutor()
+        update_subjects()
+
+    def get_tutor_subjects_entity_key(self):
+        entity_key = self.request.get('entityKey')
+        if not entity_key:
+            ts_list = TutorSubjects.query(TutorSubjects.person_id == self.request.get('pid')).fetch(1, keys_only=True)
+
+            if ts_list:  # Found an existing tutor person_id
+                entity_key = ts_list[0].urlsafe()
+        return entity_key
+
+
     def publish_tutor(self):
-        # Build a service object for interacting with the API.
+        """ Insert/update the subjects for which the tutor is available """
+
         discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
         service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
 
@@ -102,25 +116,29 @@ class PublishHandler(BaseHandler):
 
 
 class HeartbeatHandler(BaseHandler):
-    def get(self):
-        autolog("HeartbeatHandler")
+    """ Heartbeat of the tutor's hangout  """
 
+    def get(self):
         # Build a service object for interacting with the API.
         discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
         service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
 
         ts_list = TutorSubjects.query(TutorSubjects.person_id == self.request.get('pid')).fetch()
 
-        if not ts_list: # hangout is no longer available
+        if not ts_list:  # hangout is no longer available
             pass
-        else: #  Found an existing tutor person_id
+        else:  # Found an existing tutor person_id
             entity_key = ts_list[0].key.urlsafe()
+            count = self.request.get("count") if self.request.get("count") else 1
             tutor_body = {
                 "gid": self.request.get('gid'),
-                "participants_count": self.request.get("count")
+                "participants_count": count
             }
             output = service.tutor_subjects().update(entityKey=entity_key, body=tutor_body).execute()
+            remove_stale_sessions()  # cleanup closed sessions
+            update_subjects()  # Update available subjects
             return self.response.out.write(JSONEncoder().encode(output))
+
 
 class SubscribeHandler(BaseHandler):
     def get(self):
