@@ -1,17 +1,18 @@
 import json
 import datetime
 
+from google.appengine.ext import ndb
+
 import tutor_hangouts_api as hapi
 from apiclient import discovery
 from utils import JSONEncoder, autolog
 from lib.base import BaseHandler
 from models.models import TutorSubjects, HangoutSubjects
-from google.appengine.ext import ndb
 
 
 def remove_stale_sessions():
     """ When a tutor closes their H-O, we need to remove them from the available subjects """
-
+    autolog("remove_stale_sessions")
     now = datetime.datetime.now()
     del_list = TutorSubjects.query().fetch()
     keys = []
@@ -23,19 +24,15 @@ def remove_stale_sessions():
     ndb.delete_multi(keys)
 
 
-def update_subjects():
-    '''Update the subjects table to reflect the availability of the current tutor'''
-
-    discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
-    service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
-
-    subjects_list = HangoutSubjects.query().fetch()
-
-    # Retrieve Available Tutors and their subjects
-    avail_tutors_list = service.tutor_subjects().list().execute()
+def assign_available_tutors(avail_tutors_list, service, subjects_list):
+    """ Assign the tutors in the avail_ttutors_list to the  subjects
+    :param avail_tutors_list: available tutors and their subjects
+    :param service: service object
+    :param subjects_list: the tutored subjects
+    :return:
+    """
     avail_tutors = avail_tutors_list['items']
     avail_subjects = []
-
     for tutor in avail_tutors:
         json_tutor_subjects = json.loads(tutor['subjects'])
         for tutor_subject in json_tutor_subjects:
@@ -50,7 +47,7 @@ def update_subjects():
                 if subject.subject in done:
                     continue
 
-                if avail_subject == subject.subject:
+                if avail_subject == subject.subject and tutor['participants_count'] < tutor['max_participants']:
                     subject.gid = tutor['gid']
                     subject.is_available = True
 
@@ -68,6 +65,31 @@ def update_subjects():
 
                 autolog('hs_body: %s: ' % json.loads(json.dumps(hs_body)))
                 service.subjects().update(entityKey=subject_key, body=hs_body).execute()
+
+
+def update_subjects():
+    '''Update the subjects table to reflect the availability of the current tutor'''
+
+    discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
+    service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
+
+    subjects_list = HangoutSubjects.query().fetch()
+
+    # Retrieve Available Tutors and their subjects
+    avail_tutors_list = service.tutor_subjects().list().execute()
+
+    if not 'items' in avail_tutors_list:  # There are no tutors available
+        autolog('no avail_tutors_list')
+        for subject in subjects_list:  # Set all subjects to unavailable
+            subject_key = subject.key.urlsafe()
+            hs_body = {
+                "is_available": False,
+                "gid": None
+            }
+            service.subjects().update(entityKey=subject_key, body=hs_body).execute()
+    else:
+        autolog('avail_tutors_list has tutors %s' % avail_tutors_list)
+        assign_available_tutors(avail_tutors_list, service, subjects_list)
 
 
 class PublishHandler(BaseHandler):
@@ -154,8 +176,10 @@ class SubscribeHandler(BaseHandler):
 
 class SubjectsHandler(BaseHandler):
     def get(self):
-        # Set the cross origin resource sharing header to allow AJAX
-        # self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+        """ Returns the list of subjects with available tutors """
+
+        remove_stale_sessions()
+        update_subjects()
 
         # Build a service object for interacting with the API.
         discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
@@ -163,7 +187,7 @@ class SubjectsHandler(BaseHandler):
 
         subjects = service.subjects().list(order='subject').execute()
         if subjects:
-            return self.response.out.write(JSONEncoder().encode(subjects))
+            return self.response.out.write(JSONEncoder().encode(subjects.get('items', [])))
         else:
             autolog("no subjects found")
             return [{}]
