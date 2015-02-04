@@ -16,13 +16,12 @@
     <title>KX Hangout</title>
 </head>
 <body style="background-color:white">
-<div class="container" id="tutor-view" style="width: 300px">
+<div class="container" id="tutor-view" style="width: 250px">
     <div class="row well well-sm">
         <div>
             <p><b>Instructor: </b><span class="instructor"></span></p>
 
             <p><b>Student: </b><span class="clientParticipant"></span></p>
-
         </div>
     </div>
     <div class="row">
@@ -49,20 +48,18 @@
         </div>
     </div>
 </div>
-<div class="container" id="student-view" style="width: 300px">
-    <div class="row well well-sm">
+<div class="container" id="student-view" style="width: 250px">
+    <div class="row well well-sm" style="margin-left: 5px">
         <div>
             <p><b>Instructor: </b><span class="instructor"></span></p>
 
-            <p><b>Student: </b><span class="clientParticipant"></span></p>
         </div>
     </div>
-    <div class="row">
+    <div class="row" style="margin-left: 5px;margin-top: 350px;">
         <div id="tutor-rating">
             <p class="lead" style="margin-top: 5px">
                 Please rate your tutor:
             </p>
-
             <table style="width: 250px">
                 <tr>
                     <td>Knowledgable</td>
@@ -94,7 +91,6 @@
                 <input id="btn-survey" class="btn btn-primary" type="button" value="Submit">
             </p>
         </div>
-
     </div>
 </div>
 
@@ -118,7 +114,6 @@
             minimum: 0,
             maximum: 5,
             step: 0.25,
-            value: 3.0,
             numberOfDecimals: 2
         });
 

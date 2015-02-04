@@ -80,7 +80,9 @@ class TutorHangoutsApi(protorpc.remote.Service):
                                        person_id=request.person_id,
                                        subjects=request.subjects,
                                        tutor_name=request.tutor_name,
-                                       gid=request.gid)
+                                       gid=request.gid,
+                                       max_participants=request.max_participants,
+                                       participants_count=request.participants_count)
 
         tutor_subjects.put()
         return tutor_subjects

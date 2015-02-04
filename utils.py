@@ -5,15 +5,15 @@ import json
 import time
 from datetime import datetime, date
 import urllib
-from google.appengine.api import logservice
 
+from google.appengine.api import logservice
 from google.appengine.ext import ndb
 import webapp2
-
+from apiclient import discovery
+import tutor_hangouts_api as hapi
 
 def autolog(message):
     "Automatically log the current function details."
-
     # Get the previous frame in the stack, otherwise it would
     # be this function!!!
     func = inspect.currentframe().f_back.f_code
@@ -25,6 +25,7 @@ def autolog(message):
         func.co_firstlineno
     ))
 
+
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         # If this is a key, you might want to grab the actual model.
@@ -33,13 +34,12 @@ class JSONEncoder(json.JSONEncoder):
 
         if isinstance(o, ndb.Model):
             return o.to_dict()
-            #return db.to_dict(o)
+            # return db.to_dict(o)
         elif isinstance(o, (datetime, date, time)):
             return str(o)  # Or whatever other date format you're OK with...
 
 
 class LogPage(webapp2.RequestHandler):
-
     def get(self):
         logging.info('Starting Main handler')
         # Get the incoming offset param from the Next link to advance through
@@ -76,7 +76,7 @@ class LogPage(webapp2.RequestHandler):
                 'Date: %s<br />' %
                 datetime.fromtimestamp(req_log.end_time).strftime('%D %T UTC'))
 
-            last_offset= req_log.offset
+            last_offset = req_log.offset
             i += 1
 
             for app_log in req_log.app_logs:
@@ -100,10 +100,6 @@ class LogPage(webapp2.RequestHandler):
 
 class PingHandler(webapp2.RequestHandler):
     def get(self):
-        # Set the cross origin resource sharing header to allow AJAX
-        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
-
         autolog("Pinghandler")
 
-        # Print some JSON
-        self.response.out.write('{"PingHandler":"Alive..."}\n')
+

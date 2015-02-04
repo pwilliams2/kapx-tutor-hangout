@@ -1,5 +1,5 @@
 ﻿div.spinedit { display: inline-block; position: relative; }
-input[type="text"].spinedit { width: 35px; }
+input[type="text"].spinedit { width: 45px; }
 div.spinedit .icon-chevron-up,
 div.spinedit .icon-chevron-down {
     position: relative; cursor: pointer; width: 12px; left: 8px;

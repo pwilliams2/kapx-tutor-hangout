@@ -31,14 +31,12 @@
     <script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>
 <head>
 <body style="background-color:white">
-
-        <div class="container hidden" id="tutor-view" style="width: 300px">
+<div class="container hidden" id="tutor-view" style="width: 250px">
     <div class="row well well-sm">
         <div>
             <p><b>Instructor: </b><span class="instructor"></span></p>
 
             <p><b>Student: </b><span class="clientParticipant"></span></p>
-
         </div>
     </div>
     <div class="row">
@@ -65,20 +63,17 @@
         </div>
     </div>
 </div>
-<div class="container" id="student-view" style="width: 300px">
-    <div class="row well well-sm">
+<div class="container" id="student-view" style="width: 250px">
+    <div class="row well well-sm" style="margin-left: 5px">
         <div>
             <p><b>Instructor: </b><span class="instructor"></span></p>
-
-            <p><b>Student: </b><span class="clientParticipant"></span></p>
         </div>
     </div>
-    <div class="row">
+    <div class="row" style="margin-left: 5px;margin-top: 250px;">
         <div id="tutor-rating">
             <p class="lead" style="margin-top: 5px">
                 Please rate your tutor:
             </p>
-
             <table style="width: 250px">
                 <tr>
                     <td>Knowledgable</td>
@@ -102,15 +97,14 @@
                 </tr>
             </table>
 
-            <p style="margin-top: 5px">
-                <textarea row="3" cols="27" placeholder="Comments"></textarea>
+            <p style="margin-top: 5px;">
+                <textarea row="3" cols="40" placeholder="Comments"></textarea>
             </p>
 
             <p style="margin-top:5px">
                 <input id="btn-survey" class="btn btn-primary" type="button" value="Submit">
             </p>
         </div>
-
     </div>
 </div>
 

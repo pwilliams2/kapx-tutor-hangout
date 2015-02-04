@@ -1,25 +1,16 @@
 import json
-import os
-from google.appengine.ext import ndb
-import jinja2
 
 import tutor_hangouts_api as hapi
 from apiclient import discovery
 from utils import JSONEncoder, autolog
 from lib.base import BaseHandler
-
-from models.models import TutorHangoutSessions, TutorSubjects, HangoutSubjects
-
-
-# Jinja environment instance necessary to use Jinja views.
-# jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
-#                                autoescape=True)
+from models.models import TutorSubjects, HangoutSubjects
 
 
 
 class PublishHandler(BaseHandler):
     def post(self):
-        self.update_tutor()
+        self.publish_tutor()
         self.update_subjects()
 
     def get_tutor_subjects_entity_key(self):
@@ -45,8 +36,6 @@ class PublishHandler(BaseHandler):
 
         # Retrieve Available Tutors and their subjects
         avail_tutors_list = service.tutor_subjects().list().execute()
-        # subjects_list = service.subjects().list().execute()
-        # subjects = subjects_list['items']
         avail_tutors = avail_tutors_list['items']
         avail_subjects = []
 
@@ -83,16 +72,21 @@ class PublishHandler(BaseHandler):
                 print 'hs_body: %s: ' % json.loads(json.dumps(hs_body))
                 service.subjects().update(entityKey=subject_key, body=hs_body).execute()
 
-    def update_tutor(self):
+    def publish_tutor(self):
         # Build a service object for interacting with the API.
         discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
         service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
+
+        count = int(self.request.get('count')) if self.request.get('count') else 0
+        max = int(self.request.get('maxParticipants')) if self.request.get('maxParticipants') else 1
 
         tutor_body = {
             "person_id": self.request.get('pid'),
             "tutor_name": self.request.get('pName'),
             "gid": self.request.get('gid'),
-            "subjects": self.request.get('subjects')
+            "subjects": self.request.get('subjects'),
+            "participants_count": count,
+            "max_participants": max
         }
 
         entity_key = self.get_tutor_subjects_entity_key()
@@ -106,6 +100,27 @@ class PublishHandler(BaseHandler):
 
         self.response.out.write(JSONEncoder().encode(output))
 
+
+class HeartbeatHandler(BaseHandler):
+    def get(self):
+        autolog("HeartbeatHandler")
+
+        # Build a service object for interacting with the API.
+        discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
+        service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
+
+        ts_list = TutorSubjects.query(TutorSubjects.person_id == self.request.get('pid')).fetch()
+
+        if not ts_list: # hangout is no longer available
+            pass
+        else: #  Found an existing tutor person_id
+            entity_key = ts_list[0].key.urlsafe()
+            tutor_body = {
+                "gid": self.request.get('gid'),
+                "participants_count": self.request.get("count")
+            }
+            output = service.tutor_subjects().update(entityKey=entity_key, body=tutor_body).execute()
+            return self.response.out.write(JSONEncoder().encode(output))
 
 class SubscribeHandler(BaseHandler):
     def get(self):
@@ -138,4 +153,4 @@ class SubjectsHandler(BaseHandler):
 
 class MainPage(BaseHandler):
     def get(self):
-        self.render_template('templates/index.html')
+        self.render_template('templates/student.html')

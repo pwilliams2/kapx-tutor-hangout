@@ -17,9 +17,12 @@
  * the License.
  */
 var SERVER_PATH = '//kx-tutor-hangout-app.appspot.com/';
+var MAX_COUNT = 2;
 var hangoutURL = '';
 var gid ='';
+var pid = '';
 var localParticipant;
+var count = 0;
 
 // The functions triggered by the buttons on the Hangout App
 function countButtonClick() {
@@ -56,23 +59,24 @@ function getSubmitClick(subjects) {
     console.log('Selected subject' + subjects);
     var arr = hangoutURL.split('/');
     gid = arr[arr.length - 1];
+    pid = localParticipant.person.id;
 
     var payload = 'subjects=' + subjects
     + '&gid=' + gid
-    + '&pid=' + localParticipant.person.id
+    + '&pid=' + pid
     + '&pName=' + localParticipant.person.displayName
+    + '&count=' + count
+    + '&maxParticipants=' + MAX_COUNT;
 
-    httpRequest('POST', SERVER_PATH + 'publishsubjects', payload);
-
-    //http.open('POST', SERVER_PATH + 'publishsubjects');
-    //http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    //http.send('subjects=' + subjects
-    //+ '&gid=' + gid
-    //+ '&pid=' + localParticipant.person.id
-    //+ '&pName=' + localParticipant.person.displayName);
+    try {
+        $('#message').html("");
+        httpRequest('POST', SERVER_PATH + 'publishsubjects', payload);
+        $('#message').html("Submitted");
+    }catch (e) {
+        console.log(e);
+    }
 
 }
-
 
 function httpRequest(method, path, params)
 {
@@ -82,8 +86,6 @@ function httpRequest(method, path, params)
     http.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             var jsonResponse = JSON.parse(http.responseText);
-
-            $('#message').html("Submitted");
         }
         else {
             console.log("readyState: " + this.readyState)
@@ -94,12 +96,14 @@ function httpRequest(method, path, params)
     if (method && method.toUpperCase() == "GET") {
         //e.g. path == "subscribe", params == gid="gasdfsfsfssdfdsfs"
         http.open('GET', SERVER_PATH + path + '?' + params );
+        http.send();
     }
     else if ((method && method.toUpperCase() == "POST")) {
         http.open('POST', SERVER_PATH + 'publishsubjects');
         http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         http.send(params);
     }
+    console.log(SERVER_PATH + path + '?' + params);
     
 }
 
@@ -116,6 +120,7 @@ function updateStateUi(state) {
 }
 
 function updateParticipantsUi(participants) {
+    count = participants.length;
     console.log('Participants count: ' + participants.length);
 
     var clientParticipant = gapi.hangout.getLocalParticipant();
@@ -130,6 +135,17 @@ function updateParticipantsUi(participants) {
     }
 }
 
+function removeParticipantsUi(participants) {
+    console.log('removeParticipants count: ' + participants.length);
+    count = participants.length;
+    $('.clientParticipant').html("");
+}
+
+
+function heartBeat()
+{
+    httpRequest('GET', 'heartbeat', 'gid=' + gid + '&pid=' + pid + "&count=" + count);
+}
 
 // A function to be run at app initialization time which registers our callbacks
 function init() {
@@ -151,6 +167,13 @@ function init() {
             if (startData && startData.length > 1) {
                 $('#tutor-view').removeClass('hidden');
                 $('#student-view').addClass('hidden');
+
+                // Only run for tutor
+                $(function () { //reload page 20 seconds
+                    setInterval(function () {
+                        heartBeat();
+                    }, 20000);
+                });
             }
 
             gapi.hangout.data.onStateChanged.add(function (eventObj) {
@@ -159,6 +182,10 @@ function init() {
 
             gapi.hangout.onParticipantsChanged.add(function (eventObj) {
                 updateParticipantsUi(eventObj.participants);
+            });
+
+            gapi.hangout.onParticipantsRemoved.add(function (eventObj) {
+                removeParticipantsUi(eventObj.participants);
             });
 
             gapi.hangout.onApiReady.remove(apiReady);
@@ -202,7 +229,6 @@ $(function () {
 			minimum: 0,
 			maximum: 5,
 			step:.25,
-            value: 3,
             numberOfDecimals: 2
 	    });
 
@@ -211,5 +237,7 @@ $(function () {
 			console.log(e.value);
 		});
 });
+
+
 
 gadgets.util.registerOnLoadHandler(init);

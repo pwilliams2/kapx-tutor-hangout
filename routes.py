@@ -19,8 +19,9 @@ _routes = [
     # Client Subscribe
     RedirectRoute('/subscribe', handlers.SubscribeHandler, name='Subscribe', strict_slash=True),
     RedirectRoute('/subjects', handlers.SubjectsHandler, name='Subjects', strict_slash=True),
+    RedirectRoute('/heartbeat', handlers.HeartbeatHandler, name='Heartbeat', strict_slash=True),
     RedirectRoute('/logs', utils.LogPage, name='Logs', strict_slash=True),
-    RedirectRoute('/ping', utils.PingHandler, name='ping', strict_slash=True),
+    RedirectRoute('/ping', utils.PingHandler, name='ping', strict_slash=True)
 
 ]
 
