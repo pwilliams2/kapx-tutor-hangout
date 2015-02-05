@@ -21,41 +21,14 @@ var MAX_COUNT = 2;
 var hangoutURL = '';
 var gid ='';
 var pid = '';
+var tutorName='';
 var localParticipant;
 var count = 0;
+var requestedSubject='';
+var participants_ = null;
 
-// The functions triggered by the buttons on the Hangout App
-function countButtonClick() {
-    // Note that if you click the button several times in succession,
-    // if the state update hasn't gone through, it will submit the same
-    // delta again.  The hangout data state only remembers the most-recent
-    // update.
-    console.log('Button clicked.');
-    var value = 0;
-    var count = gapi.hangout.data.getState()['count'];
-    if (count) {
-        value = parseInt(count);
-    }
-
-    console.log('New count is ' + value);
-    // Send update to shared state.
-    // NOTE:  Only ever send strings as values in the key-value pairs
-    gapi.hangout.data.submitDelta({'count': '' + (value + 1)});
-}
-
-function resetButtonClick() {
-    console.log('Resetting count to 0');
-    gapi.hangout.data.submitDelta({'count': '0'});
-}
-
-var forbiddenCharacters = /[^a-zA-Z!0-9_\- ]/;
-function setText(element, text) {
-    element.innerHTML = typeof text === 'string' ?
-        text.replace(forbiddenCharacters, '') :
-        '';
-}
-
-function getSubmitClick(subjects) {
+// Publish tutor availability for subject(s)
+function publish(subjects) {
     console.log('Selected subject' + subjects);
     var arr = hangoutURL.split('/');
     gid = arr[arr.length - 1];
@@ -70,7 +43,7 @@ function getSubmitClick(subjects) {
 
     try {
         $('#message').html("");
-        httpRequest('POST', SERVER_PATH + 'publishsubjects', payload);
+        httpRequest('POST', 'publishsubjects', payload);
         $('#message').html("Submitted");
     }catch (e) {
         console.log(e);
@@ -99,7 +72,7 @@ function httpRequest(method, path, params)
         http.send();
     }
     else if ((method && method.toUpperCase() == "POST")) {
-        http.open('POST', SERVER_PATH + 'publishsubjects');
+        http.open('POST', SERVER_PATH + path);
         http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         http.send(params);
     }
@@ -112,34 +85,43 @@ function updateStateUi(state) {
     var stateCount = state['count'];
     if (!stateCount) {
         console.log('probably 0');
-        //setText(countElement, 'Probably 0');
     } else {
         console.log(stateCount.toString());
-        //setText(countElement, stateCount.toString());
     }
 }
 
 function updateParticipantsUi(participants) {
-    count = participants.length;
-    console.log('Participants count: ' + participants.length);
-
-    var clientParticipant = gapi.hangout.getLocalParticipant();
-    $('.clientParticipant').html(clientParticipant.person.displayName);
-
-    hangoutURL = gapi.hangout.getHangoutUrl();
+    console.log('updateParticipants: Participants length == '
+        + participants.length + ' count == ' + count);
     var arr = hangoutURL.split('/');
     gid = arr[arr.length - 1];
 
-    if (participants.length > 1) {
-        httpRequest('GET','subscribe','gid=' + gid);
+    participants_ = participants;
+    if (participants.length > 1 && participants.length > count) {//Add
+        console.log('subscribing...');
+        $('.clientParticipant').html(participants_[0].person.displayName);
+
+        httpRequest('POST','subscribe',
+            'tutorId=' + pid
+            + '&tutorName=' + tutorName
+            + '&gid=' + gid
+            + '&studentId=' + participants_[0].person.id
+            + '&studentName=' + participants_[0].person.displayName);
     }
+    else if (participants.length < count && count > 1) {
+        console.log('unsubscribing...');
+         $('.clientParticipant').html("");
+
+         httpRequest('POST','unsubscribe',
+            'studentId=' + participants_[0].person.id
+            + '&tutorId=' + pid
+            + '&gid=' + gid
+            + '&exit=True');
+    }
+    count = participants.length; // Update the count
 }
 
-function removeParticipantsUi(participants) {
-    console.log('removeParticipants count: ' + participants.length);
-    count = participants.length;
-    $('.clientParticipant').html("");
-}
+
 
 // Post a heartbeat to inform host that this tutor H-O is still available
 function heartBeat()
@@ -159,7 +141,8 @@ function init() {
             console.log('hangoutUrl: ' + hangoutURL);
 
             localParticipant = gapi.hangout.getLocalParticipant();  //TutorSubjects
-            $('.instructor').html(localParticipant.person.displayName);
+            tutorName = localParticipant.person.displayName
+            $('.instructor').html(tutorName);
 
             var startData = gapi.hangout.getStartData();
             console.log('start_data: ' + startData);
@@ -168,13 +151,18 @@ function init() {
                 $('#tutor-view').removeClass('hidden');
                 $('#student-view').addClass('hidden');
 
-                // Only run for tutor
-                $(function () { //reload page 20 seconds
-                    setInterval(function () {
-                        heartBeat();
-                    }, 20000);
-                });
+                // Start heartbeat, but only run for tutor
+                 $(function () { //reload page 20 seconds
+                     setInterval(function () {
+                         heartBeat();
+                     }, 20000);
+                 });
             }
+
+            //requestedSubject = gadgets.views.getParams()['gd'];
+            //if (requestedSubject && requestedSubject > 1) {
+            //    console.log('requested subject: ' + requestedSubject);
+            //}
 
             gapi.hangout.data.onStateChanged.add(function (eventObj) {
                 updateStateUi(eventObj.state);
@@ -182,10 +170,6 @@ function init() {
 
             gapi.hangout.onParticipantsChanged.add(function (eventObj) {
                 updateParticipantsUi(eventObj.participants);
-            });
-
-            gapi.hangout.onParticipantsRemoved.add(function (eventObj) {
-                removeParticipantsUi(eventObj.participants);
             });
 
             gapi.hangout.onApiReady.remove(apiReady);
@@ -218,7 +202,7 @@ $(function () {
 
     // $table is defined above
     $('#btn-subjects').click(function () {
-        getSubmitClick(JSON.stringify($table.bootstrapTable('getSelections')));
+        publish(JSON.stringify($table.bootstrapTable('getSelections')));
     });
 
 

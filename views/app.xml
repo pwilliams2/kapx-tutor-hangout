@@ -17,6 +17,7 @@
  */ -->
   <ModulePrefs title="KAPx Tutor App">
     <Require feature="rpc"/>
+    <Require feature="views"/>
   </ModulePrefs>
   <Content type="html">
       <![CDATA[
@@ -118,7 +119,7 @@
      Tip: You can load it from a local web server such as
      http://localhost/app.js for faster single user development -->
 
-    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.10"></script>
+    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.16"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
 </body>
 

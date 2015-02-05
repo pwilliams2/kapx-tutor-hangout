@@ -129,9 +129,11 @@ class TutorHangoutsApi(protorpc.remote.Service):
 
         logging.info("EP Tutor Subjects insert")
         tutor_sessions = TutorHangoutSessions(parent=TUTOR_SESSIONS_PARENT_KEY,
-                                              person_id=request.person_id,
-                                              subject=request.subject,
+                                              tutor_id=request.tutor_id,
                                               tutor_name=request.tutor_name,
+                                              subject=request.subject,
+                                              participant_id=request.participant_id,
+                                              participant_name=request.participant_name,
                                               gid=request.gid)
 
         tutor_sessions.put()

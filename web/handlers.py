@@ -3,6 +3,7 @@ import datetime
 
 from google.appengine.ext import ndb
 
+import jsonpickle
 import tutor_hangouts_api as hapi
 from apiclient import discovery
 from utils import JSONEncoder, autolog
@@ -106,7 +107,6 @@ class PublishHandler(BaseHandler):
                 entity_key = ts_list[0].urlsafe()
         return entity_key
 
-
     def publish_tutor(self):
         """ Insert/update the subjects for which the tutor is available """
 
@@ -163,15 +163,37 @@ class HeartbeatHandler(BaseHandler):
 
 
 class SubscribeHandler(BaseHandler):
-    def get(self):
-        self.response.out.write("Subscribed")
-        # autolog("updating tutor hangout session")
-        # tutor_session = TutorHangoutSessions(parent=TUTOR_SESSIONS_PARENT_KEY)
-        # tutor_session.subjects = self.request.get('subjects')
-        # tutor_session.person_id = self.request.get('pid')
-        # tutor_session.name = self.request.get('pName')
-        # tutor_session.gid = self.request.get('gid')
-        # tutor_session.put()
+    """ Update the TutorHangoutSessions store  """
+
+    def post(self):
+        autolog("updating tutor hangout session")
+        discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
+        service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
+
+        tutor_id = self.request.get('tutorId')
+        participant_id = self.request.get('studentId')
+        gid = self.request.get('gid')
+
+        if self.request.get('exit'):
+            """ The session ended, update the session end"""
+
+            session = TutorHangoutSessions.query(TutorHangoutSessions.tutor_id == tutor_id
+                                                 and TutorHangoutSessions.gid == gid
+                                                 and TutorHangoutSessions.participant_id == participant_id).fetch(1)
+            session.end = datetime.datetime.now()
+            session.put()
+        else:  # Create new TutorHangoutSession
+            ho_session = {
+                "subject": 'tbd',  # Get the subject from the TutorSubjects record
+                "tutor_id": tutor_id,  # participant.person.id for tutor
+                "tutor_name": self.request.get('tutorName'),
+                "gid": gid,
+                "participant_id": participant_id,  # participant.person.id for student
+                "participant_name": self.request.get('studentName')
+            }
+
+            output = service.tutor_sessions().insert(body=ho_session).execute()
+            self.response.out.write(jsonpickle.encode(output))
 
 
 class SubjectsHandler(BaseHandler):

@@ -20,11 +20,13 @@ class TutorSubjects(EndpointsModel):
 
 
 class TutorHangoutSessions(EndpointsModel):
-    _message_fields_schema = ('entityKey', 'person_id', 'subject', 'gid', 'tutor_name', 'start', 'end')
-    person_id = ndb.StringProperty()
+    _message_fields_schema = ('entityKey', 'tutor_id', 'subject', 'gid', 'tutor_name','participant_id', 'participant_name', 'start', 'end')
+    tutor_id = ndb.StringProperty()  # participant.person.id
     subject = ndb.StringProperty()
     gid = ndb.StringProperty()
     tutor_name = ndb.StringProperty()
+    participant_id = ndb.StringProperty()
+    participant_name = ndb.StringProperty()
     start = ndb.DateTimeProperty(auto_now_add=True, indexed=False)
     end = ndb.DateTimeProperty(indexed=False)
 
