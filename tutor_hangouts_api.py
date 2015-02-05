@@ -1,5 +1,7 @@
 import logging
+
 from google.appengine.ext import ndb
+
 
 __author__ = 'pwilliams'
 
@@ -7,7 +9,7 @@ import endpoints
 
 import protorpc
 
-from models.models import HangoutSubjects, TutorSubjects
+from models.models import HangoutSubjects, TutorSubjects, TutorHangoutSessions
 
 # API_ROOT = 'http://localhost:8080/_ah/api'
 API_ROOT = 'https://kx-tutor-hangout-app.appspot.com/_ah/api'
@@ -17,6 +19,7 @@ VERSION = 'v1'
 SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'subjects_root')
 TUTOR_SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'tutor_subjects_root')
 TUTOR_SESSIONS_PARENT_KEY = ndb.Key("Entity", 'tutor_sessions_root')
+
 
 @endpoints.api(name=API_NAME, version=VERSION, description="Tutor Hangout API")
 class TutorHangoutsApi(protorpc.remote.Service):
@@ -46,7 +49,7 @@ class TutorHangoutsApi(protorpc.remote.Service):
         """ Update a Hangout Subject """
 
         if not request.from_datastore:
-          raise endpoints.NotFoundException('Tutor Subject for update not found.')
+            raise endpoints.NotFoundException('Tutor Subject for update not found.')
 
         logging.info('Hangout Subjects update, entity_key %s' % request.entityKey)
         hangout_subject = request
@@ -102,8 +105,9 @@ class TutorHangoutsApi(protorpc.remote.Service):
         ts.put()
         return ts
 
-    @TutorSubjects.method(request_fields=("entityKey",), name="tutor_subjects.delete", path="/tutorsubjects/{entityKey}",
-                            http_method="DELETE")
+    @TutorSubjects.method(request_fields=("entityKey",), name="tutor_subjects.delete",
+                          path="/tutorsubjects/{entityKey}",
+                          http_method="DELETE")
     def tutor_subjects_delete(self, request):
         """ Delete a Hangout Subject, if exists """
         if not request.from_datastore:
@@ -111,6 +115,43 @@ class TutorHangoutsApi(protorpc.remote.Service):
 
         request.key.delete()
         return TutorSubjects(gid="deleted")
+
+
+    @TutorHangoutSessions.query_method(query_fields=("entityKey", "limit", "order", "pageToken"),
+                                name="tutor_sessions.list",
+                                path="/tutorsessions", http_method="GET")
+    def tutor_hangout_sessions_list(self, query):
+        """ Get the Tutor Sessions """
+        return query
+    @TutorHangoutSessions.method(name="tutor_sessions.insert", path="/tutorsessions", http_method="POST")
+    def tutor_hangout_sessions_insert(self, request):
+        """ Insert the Tutor Hangout Session """
+
+        logging.info("EP Tutor Subjects insert")
+        tutor_sessions = TutorHangoutSessions(parent=TUTOR_SESSIONS_PARENT_KEY,
+                                              person_id=request.person_id,
+                                              subject=request.subject,
+                                              tutor_name=request.tutor_name,
+                                              gid=request.gid)
+
+        tutor_sessions.put()
+        return tutor_sessions
+
+
+    @TutorHangoutSessions.method(name="tutor_sessions.update", path="/tutorsessions/{entityKey}",
+                                 http_method="POST")
+    def tutor_hangout_sessions_update(self, request):
+        """  Update the Tutor Hangout Session """
+
+        logging.info("EP Tutor Hangout Sessions update")
+        if not request.from_datastore:
+            raise endpoints.NotFoundException('Tutor Hangout Session for update not found.')
+
+        logging.info('entity_keys %s' % request.entityKey)
+        ts = request
+        ts.put()
+        return ts
+
 
 app = endpoints.api_server([TutorHangoutsApi], restricted=False)
 
