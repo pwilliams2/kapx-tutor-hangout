@@ -2,13 +2,13 @@ import json
 import datetime
 
 from google.appengine.ext import ndb
+from google.appengine.runtime.apiproxy_errors import OverQuotaError
 
-import jsonpickle
 import tutor_hangouts_api as hapi
 from apiclient import discovery
 from utils import JSONEncoder, autolog
 from lib.base import BaseHandler
-from models.models import TutorSubjects, HangoutSubjects
+from models.models import TutorSubjects, HangoutSubjects, TutorHangoutSessions
 
 
 def remove_stale_sessions():
@@ -25,10 +25,9 @@ def remove_stale_sessions():
     ndb.delete_multi(keys)
 
 
-def assign_available_tutors(avail_tutors_list, service, subjects_list):
+def assign_available_tutors(avail_tutors_list, subjects_list):
     """ Assign the tutors in the avail_ttutors_list to the  subjects
     :param avail_tutors_list: available tutors and their subjects
-    :param service: service object
     :param subjects_list: the tutored subjects
     :return:
     """
@@ -58,39 +57,35 @@ def assign_available_tutors(avail_tutors_list, service, subjects_list):
                     subject.is_available = False
                     subject.gid = ''
 
-                hs_body = {
-                    "subject": subject.subject,
-                    "is_available": subject.is_available,
-                    "gid": subject.gid
-                }
+                try:
+                 subject.put()
+                except:
+                    OverQuotaError
+                autolog('Over Quota Error, bypassing for now')
 
-                autolog('hs_body: %s: ' % json.loads(json.dumps(hs_body)))
-                service.subjects().update(entityKey=subject_key, body=hs_body).execute()
 
 
 def update_subjects():
     '''Update the subjects table to reflect the availability of the current tutor'''
 
-    discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
-    service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
-
     subjects_list = HangoutSubjects.query().fetch()
 
     # Retrieve Available Tutors and their subjects
-    avail_tutors_list = service.tutor_subjects().list().execute()
+    avail_tutors_list = TutorSubjects().query().fetch()
 
     if not 'items' in avail_tutors_list:  # There are no tutors available
         autolog('no avail_tutors_list')
         for subject in subjects_list:  # Set all subjects to unavailable
-            subject_key = subject.key.urlsafe()
-            hs_body = {
-                "is_available": False,
-                "gid": None
-            }
-            service.subjects().update(entityKey=subject_key, body=hs_body).execute()
+            subject.is_available = False
+            subject.gid = None
+            try:
+                subject.put()
+            except:
+                OverQuotaError
+            autolog('Over Quota Error, bypassing for now')
     else:
         autolog('avail_tutors_list has tutors %s' % avail_tutors_list)
-        assign_available_tutors(avail_tutors_list, service, subjects_list)
+        assign_available_tutors(avail_tutors_list, subjects_list)
 
 
 class PublishHandler(BaseHandler):
@@ -165,41 +160,48 @@ class HeartbeatHandler(BaseHandler):
 class SubscribeHandler(BaseHandler):
     """ Update the TutorHangoutSessions store  """
 
-    def post(self):
-        autolog("updating tutor hangout session")
-        discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
-        service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
+    def get(self):
+        """ Get the list of TutorHangoutSessions """
+        return TutorHangoutSessions.query().fetch()
 
+
+    def post(self):
+        """ """
+        autolog("updating tutor hangout session")
         tutor_id = self.request.get('tutorId')
-        participant_id = self.request.get('studentId')
         gid = self.request.get('gid')
 
         if self.request.get('exit'):
             """ The session ended, update the session end"""
-
+            autolog("Updating session end")
             session = TutorHangoutSessions.query(TutorHangoutSessions.tutor_id == tutor_id
-                                                 and TutorHangoutSessions.gid == gid
-                                                 and TutorHangoutSessions.participant_id == participant_id).fetch(1)
-            session.end = datetime.datetime.now()
-            session.put()
+                                                 and TutorHangoutSessions.gid == gid).fetch(1)
+            if not session:
+                autolog(
+                    'TutorHangoutSession was not found: tutor_id {%s}, gid{%s}' % (tutor_id, gid))
+            else:
+                now = datetime.datetime.now()
+                delta = now - session[0].start
+                session[0].end = now
+                session[0].duration = delta.total_seconds() / 60  # minutes
+                session[0].put()
         else:  # Create new TutorHangoutSession
-            ho_session = {
-                "subject": 'tbd',  # Get the subject from the TutorSubjects record
-                "tutor_id": tutor_id,  # participant.person.id for tutor
-                "tutor_name": self.request.get('tutorName'),
-                "gid": gid,
-                "participant_id": participant_id,  # participant.person.id for student
-                "participant_name": self.request.get('studentName')
-            }
-
-            output = service.tutor_sessions().insert(body=ho_session).execute()
-            self.response.out.write(jsonpickle.encode(output))
+            autolog("Creating new session")
+            ho_session = TutorHangoutSessions(
+                subject=self.request.get('subjects'),
+                tutor_id=tutor_id,
+                tutor_name=self.request.get('tutorName'),
+                gid=gid,
+                duration=None,
+                participant_id=self.request.get('studentId'),
+                participant_name=self.request.get('studentName')
+            )
+            ho_session.put()
 
 
 class SubjectsHandler(BaseHandler):
     def get(self):
         """ Returns the list of subjects with available tutors """
-
         remove_stale_sessions()
         update_subjects()
 
@@ -218,3 +220,14 @@ class SubjectsHandler(BaseHandler):
 class MainPage(BaseHandler):
     def get(self):
         self.render_template('templates/student.html')
+
+
+class SessionsPage(BaseHandler):
+    def get(self):
+        """ Get the list of TutorHangoutSessions """
+        sessions = TutorHangoutSessions.query().fetch()
+
+        template_data = {'sessions_query': sessions}
+        self.render_template('views/sessions_report.html', **template_data)
+
+

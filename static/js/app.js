@@ -17,6 +17,7 @@
  * the License.
  */
 var SERVER_PATH = '//kx-tutor-hangout-app.appspot.com/';
+var SERVER_PATH_API = '//kx-tutor-hangout-app.appspot.com/_ah/api/tutorhangouts/' //only works for GET
 var MAX_COUNT = 2;
 var hangoutURL = '';
 var gid ='';
@@ -24,12 +25,13 @@ var pid = '';
 var tutorName='';
 var localParticipant;
 var count = 0;
-var requestedSubject='';
 var participants_ = null;
+var subjects_ = '';
 
 // Publish tutor availability for subject(s)
 function publish(subjects) {
     console.log('Selected subject' + subjects);
+    subjects_ = subjects;
     var arr = hangoutURL.split('/');
     gid = arr[arr.length - 1];
     pid = localParticipant.person.id;
@@ -43,7 +45,7 @@ function publish(subjects) {
 
     try {
         $('#message').html("");
-        httpRequest('POST', 'publishsubjects', payload);
+        httpRequest('POST', SERVER_PATH, 'publishsubjects', payload);
         $('#message').html("Submitted");
     }catch (e) {
         console.log(e);
@@ -51,10 +53,9 @@ function publish(subjects) {
 
 }
 
-function httpRequest(method, path, params)
-{
-	console.log('method: ' + method + ' path: ' + path + ' params: ' + params);
-	
+function httpRequest(method, server, path, params) {
+    console.log('method: ' + method + ' path: ' + path + ' params: ' + params);
+
     var http = new XMLHttpRequest();
     http.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
@@ -68,16 +69,15 @@ function httpRequest(method, path, params)
     }
     if (method && method.toUpperCase() == "GET") {
         //e.g. path == "subscribe", params == gid="gasdfsfsfssdfdsfs"
-        http.open('GET', SERVER_PATH + path + '?' + params );
+        http.open('GET', server + path + '?' + params );
         http.send();
     }
     else if ((method && method.toUpperCase() == "POST")) {
-        http.open('POST', SERVER_PATH + path);
+        http.open('POST', server + path);
         http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         http.send(params);
     }
-    console.log(SERVER_PATH + path + '?' + params);
-    
+    console.log(server + path + '?' + params);
 }
 
 function updateStateUi(state) {
@@ -90,19 +90,27 @@ function updateStateUi(state) {
     }
 }
 
+
 function updateParticipantsUi(participants) {
     console.log('updateParticipants: Participants length == '
         + participants.length + ' count == ' + count);
+
+    participants_ = participants;
+    for (i = 0; i < participants.length;i++)
+        {
+            console.log('part ' + i + ' == ' + participants[i].person.id);
+        }
+
     var arr = hangoutURL.split('/');
     gid = arr[arr.length - 1];
 
-    participants_ = participants;
     if (participants.length > 1 && participants.length > count) {//Add
         console.log('subscribing...');
         $('.clientParticipant').html(participants_[0].person.displayName);
 
-        httpRequest('POST','subscribe',
+        httpRequest('POST', SERVER_PATH, 'subscribe',
             'tutorId=' + pid
+            + '&subjects=' + subjects_
             + '&tutorName=' + tutorName
             + '&gid=' + gid
             + '&studentId=' + participants_[0].person.id
@@ -112,8 +120,8 @@ function updateParticipantsUi(participants) {
         console.log('unsubscribing...');
          $('.clientParticipant').html("");
 
-         httpRequest('POST','unsubscribe',
-            'studentId=' + participants_[0].person.id
+         httpRequest('POST', SERVER_PATH, 'unsubscribe',
+            'studentId=' + participants_[participants_.length-1].person.id
             + '&tutorId=' + pid
             + '&gid=' + gid
             + '&exit=True');
@@ -126,7 +134,7 @@ function updateParticipantsUi(participants) {
 // Post a heartbeat to inform host that this tutor H-O is still available
 function heartBeat()
 {
-    httpRequest('GET', 'heartbeat', 'gid=' + gid + '&pid=' + pid + "&count=" + count);
+    httpRequest('GET', SERVER_PATH, 'heartbeat', 'gid=' + gid + '&pid=' + pid + "&count=" + count);
 }
 
 // A function to be run at app initialization time which registers our callbacks
@@ -159,10 +167,6 @@ function init() {
                  });
             }
 
-            //requestedSubject = gadgets.views.getParams()['gd'];
-            //if (requestedSubject && requestedSubject > 1) {
-            //    console.log('requested subject: ' + requestedSubject);
-            //}
 
             gapi.hangout.data.onStateChanged.add(function (eventObj) {
                 updateStateUi(eventObj.state);
@@ -171,6 +175,10 @@ function init() {
             gapi.hangout.onParticipantsChanged.add(function (eventObj) {
                 updateParticipantsUi(eventObj.participants);
             });
+
+            //gapi.hangout.onParticipantsRemoved.add(function (eventObj) {
+            //    removeParticipants(eventObj.participants);
+            //});
 
             gapi.hangout.onApiReady.remove(apiReady);
         }

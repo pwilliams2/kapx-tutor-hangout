@@ -12,6 +12,7 @@ _routes = [
 
     # Retrieve current subject state
     RedirectRoute('/', handlers.MainPage, name='main', strict_slash=True),
+    RedirectRoute('/sessions', handlers.SessionsPage, name='Sessions', strict_slash=True),
 
     #Tutor Publish
     RedirectRoute('/publishsubjects', handlers.PublishHandler, name='Publish', strict_slash=True),
@@ -19,6 +20,7 @@ _routes = [
     # Client Subscribe
     RedirectRoute('/subscribe', handlers.SubscribeHandler, name='Subscribe', strict_slash=True),
     RedirectRoute('/unsubscribe', handlers.SubscribeHandler, name='Subscribe', strict_slash=True),
+
     RedirectRoute('/subjects', handlers.SubjectsHandler, name='Subjects', strict_slash=True),
     RedirectRoute('/heartbeat', handlers.HeartbeatHandler, name='Heartbeat', strict_slash=True),
     RedirectRoute('/logs', utils.LogPage, name='Logs', strict_slash=True),

@@ -12,9 +12,6 @@ import config
 
 jinja_environment = jinja2.Environment(loader=jinja2.FileSystemLoader(config.base_path))
 
-
-# jinja_environment = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(config.base_path) + '/templates'))
-
 class BaseHandler(webapp2.RequestHandler):
 
     def jinja2(self):
