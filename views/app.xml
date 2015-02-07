@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/bootstrap.css">
     <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/bootstrap-table.min.css">
     <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/bootstrap-spinedit.css" />
-    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/main.css" />
+
     <script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>
 <head>
 <body style="background-color:white">
@@ -36,14 +36,12 @@
     <div class="row well well-sm">
         <div>
             <p><b>Instructor: </b><span class="instructor"></span></p>
-
             <p><b>Student: </b><span class="clientParticipant"></span></p>
         </div>
     </div>
     <div class="row">
         <div>
             <p class="lead">Select tutoring subject(s):</p>
-
             <div>
                 <table id="subjectTable" class="table" data-toggle="table"
                        data-height="280" data-width="20"
@@ -58,7 +56,6 @@
                 <p style="margin-top:5px">
                     <input id="btn-subjects" class="btn btn-primary" type="button" value="Submit">
                 </p>
-
                 <p id="message"></p>
             </div>
         </div>
@@ -79,49 +76,40 @@
                 <tr>
                     <td>Knowledgable</td>
                     <td><input type="text" id="spinknow" class="aSpinEdit spinedit"/>
-
                     </td>
                 </tr>
                 <tr>
                     <td>Communications</td>
                     <td>
                         <input type="text" id="spincomm" class="aSpinEdit spinedit noSelect"/>
-
                     </td>
                 </tr>
                 <tr>
                     <td>Overall</td>
                     <td>
                         <input type="text" id="spinall" class="aSpinEdit spinedit noSelect"/>
-
                     </td>
                 </tr>
             </table>
-
             <p style="margin-top: 5px;">
                 <textarea row="3" cols="40" placeholder="Comments"></textarea>
             </p>
-
             <p style="margin-top:5px">
                 <input id="btn-survey" class="btn btn-primary" type="button" value="Submit">
             </p>
         </div>
     </div>
 </div>
-
         <!-- Script below this line -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-spinedit.js"></script>
-
 <!-- The JavaScript for this app. This must always be a full URL not a
      relative path.
      Tip: You can load it from a local web server such as
      http://localhost/app.js for faster single user development -->
-
-    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.18"></script>
+    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.10"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
 </body>
-
 ]]></Content>
 </Module>
