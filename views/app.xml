@@ -119,7 +119,7 @@
      Tip: You can load it from a local web server such as
      http://localhost/app.js for faster single user development -->
 
-    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.25"></script>
+    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.18"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
 </body>
 

@@ -1,14 +1,15 @@
 import json
 import datetime
+from google.appengine.api.datastore_errors import BadValueError
 
-from google.appengine.ext import ndb
 from google.appengine.runtime.apiproxy_errors import OverQuotaError
+import jsonpickle
 
 import tutor_hangouts_api as hapi
 from apiclient import discovery
 from utils import JSONEncoder, autolog
 from lib.base import BaseHandler
-from models.models import TutorSubjects, HangoutSubjects, TutorHangoutSessions
+from models.models import *
 
 
 def remove_stale_sessions():
@@ -58,11 +59,10 @@ def assign_available_tutors(avail_tutors_list, subjects_list):
                     subject.gid = ''
 
                 try:
-                 subject.put()
+                    subject.put()
                 except:
                     OverQuotaError
                 autolog('Over Quota Error, bypassing for now')
-
 
 
 def update_subjects():
@@ -217,9 +217,37 @@ class SubjectsHandler(BaseHandler):
             return [{}]
 
 
+class SurveyHandler(BaseHandler):
+    def get(self):
+        """ Retrieve TutorSurveys  """
+        surveys = TutorSurveys().query().fetch()
+        return self.response.out.write(surveys)
+
+    def post(self):
+        """ Post surveys  """
+        try:
+            survey = TutorSurveys(subject=self.request.get('subject'),
+                              tutor_id=self.request.get('tutor_id'),
+                              tutor_name=self.request.get('tutor_name'),
+                              knowledge=float(self.request.get('knowledge')),
+                              communications=float(self.request.get('communications')),
+                              overall=float(self.request.get('overall')),
+                              gid=self.request.get('gid'),
+                              comments=self.request.get('comments'))
+            out = survey.put()
+            self.response.out.write(out)
+        except BadValueError, e:
+            print 'e ', e
+            autolog('BadValueError on Tutor Survey Insert: ' + str(e))
+            self.response.out.write('BadValueError on Tutor Survey Insert:' + str(e))
+        except ValueError, e:
+            autolog('ValueError on Tutor Survey Insert.')
+            self.response.out.write('ValueError on Tutor Survey Insert:' + str(e))
+
+
 class MainPage(BaseHandler):
     def get(self):
-        self.render_template('templates/student.html')
+        self.render_template('views/index.html')
 
 
 class SessionsPage(BaseHandler):

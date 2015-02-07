@@ -137,6 +137,19 @@ function heartBeat()
     httpRequest('GET', SERVER_PATH, 'heartbeat', 'gid=' + gid + '&pid=' + pid + "&count=" + count);
 }
 
+function postSurvey(){
+    console.log('postSurvey');
+     httpRequest('POST', SERVER_PATH, 'survey',
+            'tutorId=' + pid
+            + '&subjects=' + subjects_
+            + '&tutorName=' + tutorName
+            + '&gid=' + gid
+            + '&knowledge=' + $('#spinknow').text()
+            + '&communications=' + $('#spincomm').text()
+            + '&overall=' + $('#spinall').text()
+            + '&comments=' + $('#comments').text()
+     );
+}
 // A function to be run at app initialization time which registers our callbacks
 function init() {
     console.log('Init app.');
@@ -213,6 +226,9 @@ $(function () {
         publish(JSON.stringify($table.bootstrapTable('getSelections')));
     });
 
+    $('#btn-survey').click(function () {
+        postSurvey();
+    });
 
 });
 
@@ -228,8 +244,8 @@ $(function () {
 		$('.aSpinEdit').on("valueChanged", function (e) {
 			console.log(e.value);
 		});
-});
 
+});
 
 
 gadgets.util.registerOnLoadHandler(init);

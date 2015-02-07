@@ -14,40 +14,41 @@
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
+<body style="background-color:#ffffff">
 <div class="container">
     <div class="row clearfix">
         <div class="col-sm-10 column">
-                <div class="table-wrapper">
-                    <table class="table table-hover">
-                        <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Tutor</th>
-                            <th>Student</th>
-                            <th>Start</th>
-                            <th>Subject</th>
-                            <th>End</th>
-                            <th>Duration</th>
-                        </tr>
-                        </thead>
-                        <tbody>
 
-                        {% for session in sessions_query %}
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Tutor</th>
+                    <th>Student</th>
+                    <th>Start</th>
+                    <th>Subject</th>
+                    <th>End</th>
+                    <th>Duration</th>
+                    <th>Survey</th>
+                </tr>
+                </thead>
+                <tbody>
 
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td class="text-middle">{{session.tutor_name}}</td>
-                                <td class="text-middle">{{session.participant_name}}</td>
-                                <td class="text-middle">{{session.subject}}</td>
-                                <td class="text-middle">{{session.start}}</td>
-                                <td class="text-middle">{{session.end}}</td>
-                                <td class="text-middle">{{session.duration}}</td>
-                            </tr>
-                        </tbody>
-                        {% endfor %}
-                    </table>
-                </div>
+                {% for session in sessions_query %}
+
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="text-middle">{{session.tutor_name}}</td>
+                    <td class="text-middle">{{session.participant_name}}</td>
+                    <td class="text-middle">{{session.subject}}</td>
+                    <td class="text-middle">{{session.start}}</td>
+                    <td class="text-middle">{{session.end}}</td>
+                    <td class="text-middle">{{session.duration}}</td>
+                    <td class="text-middle"><a href="#">Survey</a><span class="hidden gid">{{session.gid}}</span></td>
+                </tr>
+                </tbody>
+                {% endfor %}
+            </table>
         </div>
     </div>
 </div>
