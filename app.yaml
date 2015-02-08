@@ -2,7 +2,7 @@ application: kx-tutor-hangout-app
 version: 1
 runtime: python27
 api_version: 1
-threadsafe: false
+threadsafe: true
 
 handlers:
 - url: /favicon\.ico
@@ -11,7 +11,7 @@ handlers:
   upload: static/favicon.ico
 
 - url: /views
-  static_dir: views
+  static_dir: views/
 
 - url: /js
   mime_type: text/javascript

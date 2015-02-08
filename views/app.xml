@@ -92,11 +92,12 @@
                 </tr>
             </table>
             <p style="margin-top: 5px;">
-                <textarea row="3" cols="40" placeholder="Comments"></textarea>
+                <textarea row="3" cols="40" id="comments" placeholder="Comments"></textarea>
             </p>
             <p style="margin-top:5px">
                 <input id="btn-survey" class="btn btn-primary" type="button" value="Submit">
             </p>
+            <p id="clientMessage"></p>
         </div>
     </div>
 </div>
@@ -108,7 +109,7 @@
      relative path.
      Tip: You can load it from a local web server such as
      http://localhost/app.js for faster single user development -->
-    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.10"></script>
+    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.12"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
 </body>
 ]]></Content>

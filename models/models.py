@@ -43,9 +43,10 @@ class HangoutSubjects(EndpointsModel):
     image_url = ndb.StringProperty(indexed=False)
 
 class TutorSurveys(EndpointsModel):
-    _message_fields_schema = ('entityKey', 'subject', 'tutor_name', 'create_date', 'last_modified', 'knowledge',
+    _message_fields_schema = ('entityKey', 'subject', 'student_id','tutor_id','tutor_name', 'create_date', 'last_modified', 'knowledge',
                               'communications','overall','comments')
     subject = ndb.StringProperty()
+    student_id = ndb.StringProperty()
     tutor_id = ndb.StringProperty(indexed=False)
     tutor_name = ndb.StringProperty(indexed=False)
     create_date = ndb.DateTimeProperty(auto_now_add=True)

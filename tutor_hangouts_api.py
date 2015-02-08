@@ -19,6 +19,7 @@ VERSION = 'v1'
 SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'subjects_root')
 TUTOR_SUBJECTS_PARENT_KEY = ndb.Key("Entity", 'tutor_subjects_root')
 TUTOR_SESSIONS_PARENT_KEY = ndb.Key("Entity", 'tutor_sessions_root')
+TUTOR_SURVEYS_PARENT_KEY = ndb.Key("Entity", 'tutor_surveys_root')
 
 
 @endpoints.api(name=API_NAME, version=VERSION, description="Tutor Hangout API")

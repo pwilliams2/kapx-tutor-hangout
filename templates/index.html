@@ -5,8 +5,6 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 
-    <!--<link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/boilerplate.min.css">-->
-
     <link rel="stylesheet" href="css/bootstrap.min.css">
    <link rel="stylesheet" href="css/bootstrap.css">
     <link rel="stylesheet" href="css/bootstrap-spinedit.css"/>
@@ -94,58 +92,15 @@
     </div>
 </div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-<script src="js/bootstrap.min.js"></script>
-<script src="js/bootstrap-spinedit.js"></script>
+        <!-- Script below this line -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+    <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-spinedit.js"></script>
 
-<!-- The JavaScript for this app. This must always be a full URL not a
-     relative path.
-     Tip: You can load it from a local web server such as
-     http://localhost/app.js for faster single user development -->
+    <script src="js/index.js?v=1.03"></script>
+    <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
 
-<!--<script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.01"></script>-->
-<!--<script src="js/app.js?v=1.03"></script>-->
-<script>
-    $(function () {
-        $('.instructor').html('Alan Turing');
-        $('.clientParticipant').html('Charlie Brown');
 
-        $('.aSpinEdit').spinedit({
-            minimum: 0,
-            maximum: 5,
-            step: 0.25,
-            numberOfDecimals: 2
-        });
 
-        console.log('loading sknow');
-        $('#spinknow').spinedit({
-            minimum: 0,
-            maximum: 5,
-            step: 0.25,
-            numberOfDecimals: 2
-        });
-
-        console.log('loading skcomm');
-        $('#spincomm').spinedit({
-            minimum: 0,
-            maximum: 5,
-            step: 0.25,
-            numberOfDecimals: 2
-        });
-
-        console.log('loading skall');
-        $('#spinall').spinedit({
-            minimum: 0,
-            maximum: 5,
-            step: 0.25,
-            numberOfDecimals: 2
-        });
-
-        $('.aSpinEdit').on("valueChanged", function (e) {
-            console.log(e.value);
-        });
-    });
-
-</script>
 </body>
 </html>

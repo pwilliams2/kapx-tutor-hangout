@@ -3,6 +3,7 @@ import datetime
 
 from google.appengine.api.datastore_errors import BadValueError
 from google.appengine.runtime.apiproxy_errors import OverQuotaError
+import jsonpickle
 
 import tutor_hangouts_api as hapi
 from apiclient import discovery
@@ -64,14 +65,12 @@ def update_subjects():
     '''Update the subjects table to reflect the availability of the current tutor'''
 
     subjects_list = HangoutSubjects.query(ancestor=hapi.SUBJECTS_PARENT_KEY).fetch()
-    autolog('tutor_list' % subjects_list)
 
     # Retrieve Available Tutors and their subjects
     avail_tutors = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).fetch()
-    print 'avail_tutors: ', avail_tutors
 
     if not avail_tutors:  # There are no tutors available
-        autolog('no avail_tutors_list')
+        autolog('No available tutors.')
         for subject in subjects_list:  # Set all subjects to unavailable
             subject.is_available = False
             subject.gid = None
@@ -80,7 +79,7 @@ def update_subjects():
             except OverQuotaError, e:
                 autolog('Over Quota Error, bypassing for now: ' + str(e))
     else:
-        autolog('avail_tutors_list has tutors %s' % avail_tutors)
+        autolog('There are avail_tutors.')
         assign_available_tutors(avail_tutors, subjects_list)
 
 
@@ -88,6 +87,7 @@ class PublishHandler(BaseHandler):
     def post(self):
         self.publish_tutor()
         update_subjects()
+        # self.response.set_status(200)
 
 
     def publish_tutor(self):
@@ -125,35 +125,29 @@ class HeartbeatHandler(BaseHandler):
     """ Heartbeat of the tutor's hangout  """
 
     def get(self):
-        # Build a service object for interacting with the API.
-        discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
-        service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
-
         # Search for the specified tutor id == pid
         ts_list = TutorSubjects.query(TutorSubjects.person_id == self.request.get('pid')).fetch()
 
         if not ts_list:  # hangout is no longer available
-            remove_stale_sessions()  # cleanup closed sessions
-            update_subjects()  # Update available subjects
+            pass
         else:  # Found an existing tutor person_id, then update the count
             entity_key = ts_list[0].key.urlsafe()
             count = self.request.get("count") if self.request.get("count") else 1
-            tutor_body = {
-                "gid": self.request.get('gid'),
-                "participants_count": count
-            }
-            output = service.tutor_subjects().update(entityKey=entity_key, body=tutor_body).execute()
-            remove_stale_sessions()  # cleanup closed sessions
-            update_subjects()  # Update available subjects
-            return self.response.out.write(JSONEncoder().encode(output))
+            ts_list[0].gid = self.request.get('gid')
+            ts_list[0].participants_count = count
+            ts_key = ts_list[0].put()
+            self.response.out.write(ts_key)
 
+        remove_stale_sessions()  # cleanup closed sessions
+        update_subjects()  # Update available subjects
+        self.response.set_status(200)
 
 class SubscribeHandler(BaseHandler):
     """ Update the TutorHangoutSessions store  """
 
     def get(self):
         """ Get the list of TutorHangoutSessions """
-        return TutorHangoutSessions.query().fetch()
+        return TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).fetch()
 
 
     def post(self):
@@ -165,7 +159,7 @@ class SubscribeHandler(BaseHandler):
         if self.request.get('exit'):
             """ The session ended, update the session end"""
             autolog("Updating session end")
-            session = TutorHangoutSessions.query(TutorHangoutSessions.tutor_id == tutor_id
+            session = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(TutorHangoutSessions.tutor_id == tutor_id
                                                  and TutorHangoutSessions.gid == gid).fetch(1)
             if not session:
                 autolog(
@@ -178,7 +172,7 @@ class SubscribeHandler(BaseHandler):
                 session[0].put()
         else:  # Create new TutorHangoutSession
             autolog("Creating new session")
-            ho_session = TutorHangoutSessions(
+            ho_session = TutorHangoutSessions(parent=hapi.TUTOR_SESSIONS_PARENT_KEY,
                 subject=self.request.get('subjects'),
                 tutor_id=tutor_id,
                 tutor_name=self.request.get('tutorName'),
@@ -187,8 +181,9 @@ class SubscribeHandler(BaseHandler):
                 participant_id=self.request.get('studentId'),
                 participant_name=self.request.get('studentName')
             )
-            ho_session.put()
-
+            ho_key = ho_session.put()
+            self.response.set_status(200)
+            self.response.out.write(ho_key)
 
 class SubjectsHandler(BaseHandler):
     def get(self):
@@ -204,21 +199,24 @@ class SubjectsHandler(BaseHandler):
         if subjects:
             return self.response.out.write(JSONEncoder().encode(subjects.get('items', [])))
         else:
+            self.response.set_status(204)
+            self.response._set_status_message('No subjects found')
             autolog("no subjects found")
-            return [{}]
+            return None
 
 
 class SurveyHandler(BaseHandler):
     def get(self):
         """ Retrieve TutorSurveys  """
-        surveys = TutorSurveys().query().fetch()
+        surveys = TutorSurveys().query(ancestor=hapi.TUTOR_SURVEYS_PARENT_KEY).fetch()
         return self.response.out.write(surveys)
 
     def post(self):
         """ Post surveys  """
         try:
-            survey = TutorSurveys(subject=self.request.get('subject'),
-                                  tutor_id=self.request.get('tutor_id'),
+            survey = TutorSurveys(parent=hapi.TUTOR_SURVEYS_PARENT_KEY,
+                                  subject=self.request.get('subject'),
+                                  student_id=self.request.get('student_id'),
                                   tutor_name=self.request.get('tutor_name'),
                                   knowledge=float(self.request.get('knowledge')),
                                   communications=float(self.request.get('communications')),
@@ -238,7 +236,7 @@ class SurveyHandler(BaseHandler):
 
 class MainPage(BaseHandler):
     def get(self):
-        self.render_template('views/index.html')
+        self.render_template('templates/index.html')
 
 
 class SessionsPage(BaseHandler):
@@ -247,6 +245,6 @@ class SessionsPage(BaseHandler):
         sessions = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).fetch()
 
         template_data = {'sessions_query': sessions}
-        self.render_template('views/sessions_report.html', **template_data)
+        self.render_template('templates/sessions_report.html', **template_data)
 
 

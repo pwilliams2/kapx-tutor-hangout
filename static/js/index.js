@@ -20,8 +20,9 @@ var SERVER_PATH = '//kx-tutor-hangout-app.appspot.com/';
 var SERVER_PATH_API = '//kx-tutor-hangout-app.appspot.com/_ah/api/tutorhangouts/' //only works for GET
 var MAX_COUNT = 2;
 var hangoutURL = '';
-var gid = '';
-var pid = '';
+var gid = 'gxx5k3fvmhehr5y2jy3utw2lmma';
+var pid = '106169527894682623483';
+var student_id = '112559088293509078499';
 var tutorName = '';
 var localParticipant;
 var count = 0;
@@ -136,73 +137,28 @@ function heartBeat() {
 
 function postSurvey() {
     console.log('postSurvey');
-    payload = 'student_id=' + localParticipant.person.id
-    + '&subjects=' + subjects_
-    + '&tutorName=' + tutorName
-    + '&gid=' + gid
-    + '&knowledge=' + $('#spinknow').val()
-    + '&communications=' + $('#spincomm').val()
-    + '&overall=' + $('#spinall').val()
-    + '&comments=' + $('#comments').val();
 
-    try {
-        $('#clientMessage').html("");
-        httpRequest('POST', SERVER_PATH, 'surveys', payload);
-        $('#clientMessage').html("Submitted");
-    } catch (e) {
-        console.log(e);
-    }
-}
-// A function to be run at app initialization time which registers our callbacks
-function init() {
-    console.log('Init app.');
+    console.log('know: ' + $('#spinknow').val());
+    console.log('comm: ' + $('#spincomm').val());
+    console.log('overall : ' + $('#spinall').val());
+    console.log('comments: ' + $('#comments').val());
 
-    var apiReady = function (eventObj) {
-        if (eventObj.isApiReady) {
-            console.log('API is ready');
-
-            hangoutURL = gapi.hangout.getHangoutUrl();
-            var arr = hangoutURL.split('/');
-            gid = arr[arr.length - 1];
-            console.log('hangoutUrl: ' + hangoutURL);
-
-            localParticipant = gapi.hangout.getLocalParticipant();  //TutorSubjects
-            tutorName = localParticipant.person.displayName
-            $('.instructor').html(tutorName);
-
-            var startData = gapi.hangout.getStartData();
-            console.log('start_data: ' + startData);
-
-            if (startData && startData.length > 1) {
-                $('#tutor-view').removeClass('hidden');
-                $('#student-view').addClass('hidden');
-
-                // Start heartbeat, but only run for tutor
-                $(function () { //reload page 20 seconds
-                    setInterval(function () {
-                        heartBeat();
-                    }, 20000);
-                });
-            }
-
-
-            gapi.hangout.data.onStateChanged.add(function (eventObj) {
-                updateStateUi(eventObj.state);
-            });
-
-            gapi.hangout.onParticipantsChanged.add(function (eventObj) {
-                updateParticipantsUi(eventObj.participants);
-            });
-
-            //gapi.hangout.onParticipantsRemoved.add(function (eventObj) {
-            //    removeParticipants(eventObj.participants);
-            //});
-
-            gapi.hangout.onApiReady.remove(apiReady);
-        }
-    };
-
-    gapi.hangout.onApiReady.add(apiReady);
+    //payload = 'student_id=' + student_id
+    //+ '&subjects=' + subjects_
+    //+ '&tutorName=' + tutorName
+    //+ '&gid=' + gid
+    //+ '&knowledge=' + $('#spinknow').html()
+    //+ '&communications=' + $('#spincomm').text()
+    //+ '&overall=' + $('#spinall').text()
+    //+ '&comments=' + $('#comments').text();
+    //
+    //try {
+    //    $('#clientMessage').html("");
+    //    httpRequest('POST', SERVER_PATH, 'surveys', payload);
+    //    $('#clientMessage').html("Submitted");
+    //} catch (e) {
+    //    console.log(e);
+    //}
 }
 
 $(function () {
@@ -253,4 +209,4 @@ $(function () {
 });
 
 
-gadgets.util.registerOnLoadHandler(init);
+//gadgets.util.registerOnLoadHandler(init);
