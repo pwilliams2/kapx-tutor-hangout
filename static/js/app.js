@@ -57,6 +57,7 @@ function httpRequest(method, server, path, params) {
     console.log('method: ' + method + ' path: ' + path + ' params: ' + params);
 
     var http = new XMLHttpRequest();
+
     http.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             var jsonResponse = JSON.parse(http.responseText);
@@ -64,7 +65,7 @@ function httpRequest(method, server, path, params) {
         else {
             console.log("readyState: " + this.readyState)
             console.log("status: " + this.status)
-            console.log("statusText: " + http.responseText)
+            //console.log("statusText: " + http.responseText)
         }
     }
     if (method && method.toUpperCase() == "GET") {
@@ -77,7 +78,7 @@ function httpRequest(method, server, path, params) {
         http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         http.send(params);
     }
-    console.log(server + path + '?' + params);
+    //console.log(server + path + '?' + params);
 }
 
 function updateStateUi(state) {
@@ -138,7 +139,8 @@ function postSurvey() {
     console.log('postSurvey');
     payload = 'student_id=' + localParticipant.person.id
     + '&subjects=' + subjects_
-    + '&tutorName=' + tutorName
+    + '&tutor_name=' + tutorName
+    + '&student_name=' + localParticipant.person.displayName
     + '&gid=' + gid
     + '&knowledge=' + $('#spinknow').val()
     + '&communications=' + $('#spincomm').val()
@@ -243,11 +245,6 @@ $(function () {
         maximum: 5,
         step: .25,
         numberOfDecimals: 2
-    });
-
-
-    $('.aSpinEdit').on("valueChanged", function (e) {
-        console.log(e.value);
     });
 
 });

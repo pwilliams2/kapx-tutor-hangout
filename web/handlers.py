@@ -3,7 +3,7 @@ import datetime
 
 from google.appengine.api.datastore_errors import BadValueError
 from google.appengine.runtime.apiproxy_errors import OverQuotaError
-import jsonpickle
+from google.appengine import runtime
 
 import tutor_hangouts_api as hapi
 from apiclient import discovery
@@ -16,14 +16,19 @@ def remove_stale_sessions():
     """ When a tutor closes their H-O, we need to remove them from the available subjects """
     autolog("remove_stale_sessions")
     now = datetime.datetime.now()
-    del_list = TutorSubjects.query(ancestor=hapi.SUBJECTS_PARENT_KEY).fetch()
-    keys = []
-    for item in del_list:
-        delta = now - item.last_modified
-        if delta.total_seconds() > 60:
-            keys.append(item.key)
+    del_list = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).fetch()
 
-    ndb.delete_multi(keys)
+    if del_list and len(del_list) > 0:
+        autolog('del_list')
+        keys = []
+        for item in del_list:
+            delta = now - item.last_modified
+            if delta.total_seconds() > 60:
+                keys.append(item.key)
+
+        if len(keys) > 0:
+            autolog('deleting tutor keys ' % keys)
+            ndb.delete_multi(keys)
 
 
 def assign_available_tutors(avail_tutors, subjects_list):
@@ -38,6 +43,14 @@ def assign_available_tutors(avail_tutors, subjects_list):
         for tutor_subject in json_tutor_subjects:
             subject = tutor_subject['subject']
             avail_subjects.append(subject)
+
+        if len(avail_subjects) == 0:  # No available tutors, so set all subjects to unavailable
+            subjects = []
+            for subject in subjects_list:
+                subject.is_available = False
+                subjects.append(subject)
+            ndb.put_multi(subjects)
+            break
 
         done = []  # Subjects that are already updated.
         for avail_subject in avail_subjects:
@@ -85,9 +98,12 @@ def update_subjects():
 
 class PublishHandler(BaseHandler):
     def post(self):
+        """ Post available tutor subjects
+        :return: None
+        """
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         self.publish_tutor()
         update_subjects()
-        # self.response.set_status(200)
 
 
     def publish_tutor(self):
@@ -125,6 +141,9 @@ class HeartbeatHandler(BaseHandler):
     """ Heartbeat of the tutor's hangout  """
 
     def get(self):
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+        self.response.headers['Content-Type'] = 'text/plain'
+
         # Search for the specified tutor id == pid
         ts_list = TutorSubjects.query(TutorSubjects.person_id == self.request.get('pid')).fetch()
 
@@ -134,24 +153,27 @@ class HeartbeatHandler(BaseHandler):
             entity_key = ts_list[0].key.urlsafe()
             count = self.request.get("count") if self.request.get("count") else 1
             ts_list[0].gid = self.request.get('gid')
-            ts_list[0].participants_count = count
+            ts_list[0].participants_count = int(count)
             ts_key = ts_list[0].put()
-            self.response.out.write(ts_key)
 
         remove_stale_sessions()  # cleanup closed sessions
         update_subjects()  # Update available subjects
-        self.response.set_status(200)
+        self.response.set_status(200,'ok')
+
+
 
 class SubscribeHandler(BaseHandler):
     """ Update the TutorHangoutSessions store  """
 
     def get(self):
         """ Get the list of TutorHangoutSessions """
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         return TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).fetch()
 
 
     def post(self):
-        """ """
+        """ Subscribe client for H-O session"""
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         autolog("updating tutor hangout session")
         tutor_id = self.request.get('tutorId')
         gid = self.request.get('gid')
@@ -159,8 +181,9 @@ class SubscribeHandler(BaseHandler):
         if self.request.get('exit'):
             """ The session ended, update the session end"""
             autolog("Updating session end")
-            session = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(TutorHangoutSessions.tutor_id == tutor_id
-                                                 and TutorHangoutSessions.gid == gid).fetch(1)
+            session = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(
+                TutorHangoutSessions.tutor_id == tutor_id
+                and TutorHangoutSessions.gid == gid).fetch(1)
             if not session:
                 autolog(
                     'TutorHangoutSession was not found: tutor_id {%s}, gid{%s}' % (tutor_id, gid))
@@ -173,21 +196,23 @@ class SubscribeHandler(BaseHandler):
         else:  # Create new TutorHangoutSession
             autolog("Creating new session")
             ho_session = TutorHangoutSessions(parent=hapi.TUTOR_SESSIONS_PARENT_KEY,
-                subject=self.request.get('subjects'),
-                tutor_id=tutor_id,
-                tutor_name=self.request.get('tutorName'),
-                gid=gid,
-                duration=None,
-                participant_id=self.request.get('studentId'),
-                participant_name=self.request.get('studentName')
+                                              subject=self.request.get('subjects'),
+                                              tutor_id=tutor_id,
+                                              tutor_name=self.request.get('tutorName'),
+                                              gid=gid,
+                                              duration=None,
+                                              participant_id=self.request.get('studentId'),
+                                              participant_name=self.request.get('studentName')
             )
             ho_key = ho_session.put()
             self.response.set_status(200)
             self.response.out.write(ho_key)
 
+
 class SubjectsHandler(BaseHandler):
     def get(self):
         """ Returns the list of subjects with available tutors """
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         remove_stale_sessions()
         update_subjects()
 
@@ -195,29 +220,44 @@ class SubjectsHandler(BaseHandler):
         discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
         service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
 
-        subjects = service.subjects().list(order='subject').execute()
-        if subjects:
-            return self.response.out.write(JSONEncoder().encode(subjects.get('items', [])))
-        else:
-            self.response.set_status(204)
-            self.response._set_status_message('No subjects found')
-            autolog("no subjects found")
+        try:
+            subjects = service.subjects().list(order='subject').execute()
+            if subjects:
+                return self.response.out.write(JSONEncoder().encode(subjects.get('items', [])))
+            else:
+                self.response.set_status(204)
+                self.response.set_status_message('No subjects found')
+                autolog("no subjects found")
+                return None
+        except runtime.DeadlineExceededError, e:
+            autolog('Deadline Exceed Error: ' + str(e))
             return None
-
 
 class SurveyHandler(BaseHandler):
     def get(self):
         """ Retrieve TutorSurveys  """
-        surveys = TutorSurveys().query(ancestor=hapi.TUTOR_SURVEYS_PARENT_KEY).fetch()
-        return self.response.out.write(surveys)
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+        student_id = self.request.get('student_id')
+        gid = self.request.get('gid')
+        if student_id and gid:  # Survey lookup
+            surveys = TutorSurveys.query(TutorSurveys.student_id == student_id and
+                                         TutorSurveys.gid == gid).fetch()
+        else:
+            surveys = TutorSurveys.query(ancestor=hapi.TUTOR_SURVEYS_PARENT_KEY).fetch()
+
+        if len(surveys) > 0:
+            return self.response.out.write(surveys)
 
     def post(self):
         """ Post surveys  """
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+
         try:
             survey = TutorSurveys(parent=hapi.TUTOR_SURVEYS_PARENT_KEY,
                                   subject=self.request.get('subject'),
                                   student_id=self.request.get('student_id'),
                                   tutor_name=self.request.get('tutor_name'),
+                                  student_name=self.request.get('student_name'),
                                   knowledge=float(self.request.get('knowledge')),
                                   communications=float(self.request.get('communications')),
                                   overall=float(self.request.get('overall')),

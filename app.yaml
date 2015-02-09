@@ -16,6 +16,8 @@ handlers:
 - url: /js
   mime_type: text/javascript
   static_dir: static/js
+  http_headers:
+    Access-Control-Allow-Origin: '*'
 
 - url: /css
   static_dir: static/css
@@ -33,7 +35,6 @@ handlers:
 
 - url: /.*
   script: main.app
-
 
 libraries:
 - name: webapp2
