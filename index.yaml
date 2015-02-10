@@ -30,3 +30,13 @@ indexes:
     direction: desc
   - name: gid
     direction: desc
+
+- kind: TutorSurveys
+  ancestor: yes
+  properties:
+  - name: tutor_id
+    direction: desc
+  - name: student_id
+    direction: desc
+  - name: gid
+    direction: desc

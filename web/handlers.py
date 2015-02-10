@@ -282,10 +282,17 @@ class AdminPage(BaseHandler):
     def get(self):
         self.render_template('templates/admin.html')
 
+class AnalyticsPage(BaseHandler):
+    def get(self):
+        self.render_template('templates/analytics.html')
+
 class MainPage(BaseHandler):
     def get(self):
         self.render_template('templates/index.html')
 
+class ReportCardPage(BaseHandler):
+    def get(self):
+        self.render_template('templates/report_card.html')
 
 class SessionsPage(BaseHandler):
     def get(self):

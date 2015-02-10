@@ -8,7 +8,7 @@
     <meta name="author" content="">
     <link rel="icon" href="/favicon.ico">
 
-    <title>KAPx Tutor Dashboard</title>
+    <title>KAPx Tutor Reports</title>
 
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
 
     <script src="js/ie-emulation-modes-warning.js"></script>
+
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -52,17 +53,17 @@
         <!-- Sidebar -->
         <div class="col-sm-3 col-md-2 sidebar">
             <ul class="nav nav-sidebar">
-                <li class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
+                <li><a href="/admin">Overview <span class="sr-only">(current)</span></a></li>
                 <li><a href="/sessions">Sessions</a></li>
                 <li><a href="/analytics">Analytics</a></li>
-                <li><a href="/reports">Tutor Report Card</a></li>
+                <li class="active"><a href="#">Tutor Report Card</a></li>
 
             </ul>
 
         </div>
 
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-            <h1 class="page-header">Tutor Hangouts Dashboard</h1>
+            <h1 class="page-header">Tutor Hangouts Analytics</h1>
 
             <div class="row">
                 <div class="col-lg-2 col-md-4">
@@ -142,7 +143,7 @@
                                     <i class="fa fa-briefcase fa-3x"></i>
                                 </div>
                                 <div class="col-xs-9 text-right">
-                                    <div class="huge">1/1</div>
+                                    <div class="huge">2/1</div>
                                     <div class="text-left">Business</div>
                                 </div>
                             </div>
@@ -158,7 +159,7 @@
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-4">
-                    <div class="panel panel-info">
+                    <div class="panel panel-default">
                         <div class="panel-heading">
                             <div class="row">
                                 <div class="col-xs-3">
@@ -184,80 +185,13 @@
             <!-- /.row -->
 
 
-            <h2 class="sub-header">Online Snapshot</h2>
-            <!-- Tutor summary table -->
-            <div class="col-md-7">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Tutor</th>
+            <h2 class="sub-header">Analytics</h2>
 
-                            <th>Subject(s)</th>
-                            <th>Sessions<br/>Served</th>
-                            <th>Elapsed<br>(Hours)</th>
-
-                            <th>Active<br/>(Hours)</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>Alan Turing</td>
-                            <td>General Math</td>
-                            <td>4</td>
-                            <td>4.5</td>
-                            <td>.5</td>
-                        </tr>
-
-                        <tr>
-                            <td>2</td>
-                            <td>Ada Lovelace</td>
-                            <td>General Math,Calculus</td>
-                            <td>1</td>
-                            <td>2.75</td>
-                            <td>.25</td>
-                        </tr>
-                        <tr>
-                            <td>3</td>
-                            <td>John Faraday</td>
-                            <td>Technology</td>
-                            <td>5</td>
-                            <td>4</td>
-                            <td>1.2</td>
-                        </tr>
-                        <tr>
-                            <td>4</td>
-                            <td>Tycho Brahe</td>
-                            <td>Science</td>
-                            <td>1</td>
-                            <td>3.5</td>
-                            <td>.25</td>
-                        </tr>
-                        <tr>
-                            <td>5</td>
-                            <td>Mary Shelley</td>
-                            <td>Writing</td>
-                            <td>4</td>
-                            <td>1</td>
-                            <td>1</td>
-                        </tr>
-                        <tr>
-                            <td>6</td>
-                            <td>Steve Jobs</td>
-                            <td>Business</td>
-                            <td>2</td>
-                            <td>2.5</td>
-                            <td>.25</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="col-md-8">
+                <div id="area-usage" style="height: 250px;"></div>
             </div>
-
-            <!-- Surveys -->
-            <div class="col-md-4 col-offset-1">
+            <!-- comments -->
+            <div class="col-md-3 col-offset-1">
                 <div class="chat-panel panel panel-default">
                     <div class="panel-heading">
                         <i class="fa fa-comments fa-fw"></i>
@@ -346,6 +280,10 @@
 <!-- Placed at the end of the document so the pages load faster -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
+
+<script src="js/admin.js"></script>
 <script src="js/docs.min.js"></script>
 <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 <script src="js/ie10-viewport-bug-workaround.js"></script>

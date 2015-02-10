@@ -11,9 +11,13 @@ secure_scheme = 'https'
 _routes = [
 
     # Retrieve current subject state
-    RedirectRoute('/admin', handlers.AdminPage, name='Admin', strict_slash=True),
     RedirectRoute('/', handlers.MainPage, name='main', strict_slash=True),
-    RedirectRoute('/sessions', handlers.SessionsPage, name='Sessions', strict_slash=True),
+
+    RedirectRoute('/admin', handlers.AdminPage, name='Admin', strict_slash=True),
+    RedirectRoute('/analytics', handlers.AnalyticsPage, name='Analytics', strict_slash=True),
+    RedirectRoute('/reports', handlers.ReportCardPage, name='ReportCard', strict_slash=True),
+
+     RedirectRoute('/sessions', handlers.SessionsPage, name='Sessions', strict_slash=True),
 
     #Tutor Publish
     RedirectRoute('/publishsubjects', handlers.PublishHandler, name='Publish', strict_slash=True),
