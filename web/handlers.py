@@ -44,15 +44,18 @@ def assign_available_tutors(avail_tutors, subjects_list):
             subject = tutor_subject['subject']
             avail_subjects.append(subject)
 
+        done = []  # Subjects that are already updated.
         if len(avail_subjects) == 0:  # No available tutors, so set all subjects to unavailable
             subjects = []
             for subject in subjects_list:
+                if subject.subject in done:
+                    continue
                 subject.is_available = False
                 subjects.append(subject)
             ndb.put_multi(subjects)
             break
 
-        done = []  # Subjects that are already updated.
+
         for avail_subject in avail_subjects:
             for subject in subjects_list:
                 if subject.subject in done:
@@ -178,6 +181,7 @@ class SubscribeHandler(BaseHandler):
         tutor_id = self.request.get('tutorId')
         gid = self.request.get('gid')
 
+
         if self.request.get('exit'):
             """ The session ended, update the session end"""
             autolog("Updating session end")
@@ -274,6 +278,10 @@ class SurveyHandler(BaseHandler):
             self.response.out.write('ValueError on Tutor Survey Insert:' + str(e))
 
 
+class AdminPage(BaseHandler):
+    def get(self):
+        self.render_template('templates/admin.html')
+
 class MainPage(BaseHandler):
     def get(self):
         self.render_template('templates/index.html')
@@ -282,9 +290,9 @@ class MainPage(BaseHandler):
 class SessionsPage(BaseHandler):
     def get(self):
         """ Get the list of TutorHangoutSessions """
-        sessions = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).fetch()
+        sessions = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).order(-TutorHangoutSessions.start).fetch()
 
         template_data = {'sessions_query': sessions}
-        self.render_template('templates/sessions_report.html', **template_data)
+        self.render_template('templates/sessions.html', **template_data)
 
 

@@ -11,6 +11,7 @@ secure_scheme = 'https'
 _routes = [
 
     # Retrieve current subject state
+    RedirectRoute('/admin', handlers.AdminPage, name='Admin', strict_slash=True),
     RedirectRoute('/', handlers.MainPage, name='main', strict_slash=True),
     RedirectRoute('/sessions', handlers.SessionsPage, name='Sessions', strict_slash=True),
 

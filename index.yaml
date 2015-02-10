@@ -14,3 +14,19 @@ indexes:
   ancestor: yes
   properties:
   - name: subject
+
+- kind: TutorHangoutSessions
+  ancestor: yes
+  properties:
+  - name: start
+    direction: desc
+
+- kind: TutorHangoutSessions
+  ancestor: yes
+  properties:
+  - name: start
+    direction: desc
+  - name: tutor_id
+    direction: desc
+  - name: gid
+    direction: desc
