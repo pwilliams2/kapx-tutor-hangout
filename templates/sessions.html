@@ -17,9 +17,11 @@
     <!-- Custom styles for this template -->
     <link href="css/dashboard.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="css/sb-admin-2.css" rel="stylesheet">
+    <!--<link href="css/sb-admin-2.css" rel="stylesheet">-->
 
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="//cdn.datatables.net/1.10.5/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="//cdn.datatables.net/plug-ins/f2c75b7247b/integration/bootstrap/3/dataTables.bootstrap.css">
 
     <script src="js/ie-emulation-modes-warning.js"></script>
 
@@ -40,9 +42,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-
         </div>
-
     </div>
 </nav>
 <div class="container-fluid">
@@ -63,50 +63,8 @@
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
             <h1 class="page-header">Tutor Hangouts Sessions</h1>
 
-            <div class="col-sm-3 input-group custom-search-form">
-                <input type="text" class="form-control" placeholder="Search...">
-                                <span class="input-group-btn">
-                                <button class="btn btn-default" type="button">
-                                    <i class="fa fa-search"></i>
-                                </button>
-                            </span>
-            </div>
-            <table class="table table-hover">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Tutor</th>
-                    <th>Student</th>
-                    <th>Subject</th>
-                    <th>Start</th>
-                    <th>Duration (min)</th>
-                    <th>Survey</th>
-                </tr>
-                </thead>
-                <tbody>
+            <table id="sessions" class="display" cellspacing="0" width="100%">
 
-                {% for session in sessions_query %}
-
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td class="text-middle">{{session.tutor_name}}</td>
-                    <td class="text-middle">{{session.participant_name}}</td>
-                    <td class="text-middle">{{session.subject}}</td>
-                    {% if session.start %}
-                    <td class="text-middle">{{session.start.strftime('%Y-%m-%d %H:%M')}}</td>
-
-                    {% else %}
-                    <td class="text-middle">-</td>
-                    {% endif %}
-                    {% if session.duration %}
-                    <td class="text-middle">{{'%10.2f' % session.duration| float}}</td>
-                    {% else %}
-                    <td class="text-middle">-</td>
-                    {% endif %}
-                    <td class="text-middle"><a href="#">Survey</a><span class="hidden gid">{{session.gid}}</span></td>
-                </tr>
-                </tbody>
-                {% endfor %}
             </table>
         </div>
     </div>
@@ -114,9 +72,14 @@
 
 <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="//cdn.datatables.net/1.10.5/js/jquery.dataTables.min.js"></script>
+<script src="//cdn.datatables.net/plug-ins/f2c75b7247b/integration/bootstrap/3/dataTables.bootstrap.js"></script>
+
 <!-- Compiled and minified Bootstrap JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
-<!-- Latest compiled and minified JavaScript -->
 
+<script src="js/sessions.js"></script>
+
+</script>
 </body>
 </html>

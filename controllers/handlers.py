@@ -55,7 +55,6 @@ def assign_available_tutors(avail_tutors, subjects_list):
             ndb.put_multi(subjects)
             break
 
-
         for avail_subject in avail_subjects:
             for subject in subjects_list:
                 if subject.subject in done:
@@ -161,7 +160,31 @@ class HeartbeatHandler(BaseHandler):
 
         remove_stale_sessions()  # cleanup closed sessions
         update_subjects()  # Update available subjects
-        self.response.set_status(200,'ok')
+        self.response.set_status(200, 'ok')
+
+
+class SessionHandler(BaseHandler):
+    def get(self):
+        """ List of sessions      """
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+
+        ths_list = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).fetch()
+
+        data_list = []
+        for session in ths_list:
+            start_date = session.start.strftime('%Y-%m-%d %H:%M') if session.start else ''
+            # end_date = session.end.strftime('%Y-%m-%d %H:%M') if session.end else ''
+            survey_id = str(session.survey_key.id) if session.survey_key else ''
+            duration = str('%10.2f' % session.duration) if session.duration else ''
+            row_list = ['',session.tutor_name, session.participant_name, session.subject,
+                        start_date, duration, survey_id]
+
+            data_list.append(row_list)
+
+        data = {
+            "data": [ths for ths in data_list]
+        }
+        self.response.out.write(json.dumps(data))
 
 
 
@@ -181,13 +204,11 @@ class SubscribeHandler(BaseHandler):
         tutor_id = self.request.get('tutorId')
         gid = self.request.get('gid')
 
-
         if self.request.get('exit'):
             """ The session ended, update the session end"""
             autolog("Updating session end")
-            session = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(
-                TutorHangoutSessions.tutor_id == tutor_id
-                and TutorHangoutSessions.gid == gid).fetch(1)
+            session = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(ndb.AND(
+                TutorHangoutSessions.tutor_id == tutor_id, TutorHangoutSessions.gid == gid)).fetch(1)
             if not session:
                 autolog(
                     'TutorHangoutSession was not found: tutor_id {%s}, gid{%s}' % (tutor_id, gid))
@@ -237,15 +258,21 @@ class SubjectsHandler(BaseHandler):
             autolog('Deadline Exceed Error: ' + str(e))
             return None
 
+
 class SurveyHandler(BaseHandler):
     def get(self):
         """ Retrieve TutorSurveys  """
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+
+        if self.request.get('data'):  # Data request
+            return self.get_data()
+
         student_id = self.request.get('student_id')
         gid = self.request.get('gid')
-        if student_id and gid:  # Survey lookup
-            surveys = TutorSurveys.query(TutorSurveys.student_id == student_id and
-                                         TutorSurveys.gid == gid).fetch()
+
+        if student_id and gid:  # A survey lookup
+            surveys = TutorSurveys.query(
+                ndb.AND(TutorSurveys.student_id == student_id, TutorSurveys.gid == gid)).fetch()
         else:
             surveys = TutorSurveys.query(ancestor=hapi.TUTOR_SURVEYS_PARENT_KEY).fetch()
 
@@ -256,50 +283,64 @@ class SurveyHandler(BaseHandler):
         """ Post surveys  """
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
 
+        student_id = self.request.get('student_id')
+        gid = self.request.get('gid')
+
+        if len(student_id) == 0 or len(gid) == 0:
+            self.response.set_status(500, 'Missing student id or gid values')
+            return False
+
+        survey = TutorSurveys.query(ndb.AND(TutorSurveys.student_id == student_id, TutorSurveys.gid == gid)).fetch()
+
         try:
-            survey = TutorSurveys(parent=hapi.TUTOR_SURVEYS_PARENT_KEY,
-                                  subject=self.request.get('subject'),
-                                  student_id=self.request.get('student_id'),
-                                  tutor_name=self.request.get('tutor_name'),
-                                  student_name=self.request.get('student_name'),
-                                  knowledge=float(self.request.get('knowledge')),
-                                  communications=float(self.request.get('communications')),
-                                  overall=float(self.request.get('overall')),
-                                  gid=self.request.get('gid'),
-                                  comments=self.request.get('comments'))
-            out = survey.put()
-            self.response.out.write(out)
+            if survey:
+                survey[0].knowledge = float(self.request.get('knowledge'))
+                survey[0].communications = float(self.request.get('communications'))
+                survey[0].overall = float(self.request.get('overall'))
+                survey[0].comments = self.request.get('comments')
+                survey[0].student_id = student_id
+                survey[0].student_name = self.request.get('student_name')
+                survey[0].tutor_name = self.request.get('tutor_name')
+                s_key = survey[0].put()
+                self.response.out.write(s_key)
+            else:
+                survey = TutorSurveys(parent=hapi.TUTOR_SURVEYS_PARENT_KEY,
+                                      subject=self.request.get('subject'),
+                                      student_id=student_id,
+                                      tutor_name=self.request.get('tutor_name'),
+                                      student_name=self.request.get('student_name'),
+                                      knowledge=float(self.request.get('knowledge')),
+                                      communications=float(self.request.get('communications')),
+                                      overall=float(self.request.get('overall')),
+                                      gid=gid,
+                                      comments=self.request.get('comments'))
+                survey_key = survey.put()
+                self.update_session_with_survey(gid, student_id, survey_key)
+                self.response.out.write(survey_key)
         except BadValueError, e:
-            print 'e ', e
+            self.response.set_status(500, 'BadValueError on Tutor Survey Insert.' + str(e))
             autolog('BadValueError on Tutor Survey Insert: ' + str(e))
             self.response.out.write('BadValueError on Tutor Survey Insert:' + str(e))
         except ValueError, e:
+            self.response.set_status(500, 'ValueError on Tutor Survey Insert.' + str(e))
             autolog('ValueError on Tutor Survey Insert.')
-            self.response.out.write('ValueError on Tutor Survey Insert:' + str(e))
+        except Exception, e:
+            self.response.set_status(500, 'Exception on Tutor Survey Insert.' + str(e))
+            autolog('Exception on Tutor Survey Insert.')
+            self.response.out.write('Exception on Tutor Survey Insert:' + str(e))
 
 
-class AdminPage(BaseHandler):
-    def get(self):
-        self.render_template('templates/admin.html')
+    def update_session_with_survey(self, gid, student_id, survey_key):
+        """ Update the Hangout Session with a survey key
+        :param survey_key:
+        :return:
+        """
 
-class AnalyticsPage(BaseHandler):
-    def get(self):
-        self.render_template('templates/analytics.html')
-
-class MainPage(BaseHandler):
-    def get(self):
-        self.render_template('templates/index.html')
-
-class ReportCardPage(BaseHandler):
-    def get(self):
-        self.render_template('templates/report_card.html')
-
-class SessionsPage(BaseHandler):
-    def get(self):
-        """ Get the list of TutorHangoutSessions """
-        sessions = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).order(-TutorHangoutSessions.start).fetch()
-
-        template_data = {'sessions_query': sessions}
-        self.render_template('templates/sessions.html', **template_data)
-
-
+        session = TutorHangoutSessions.query(
+            ndb.AND(TutorHangoutSessions.participant_id == student_id, TutorHangoutSessions.gid == gid)).fetch()
+        if session:
+            session[0].survey_id = survey_key
+            session[0].put()
+            return True
+        else:
+            return False

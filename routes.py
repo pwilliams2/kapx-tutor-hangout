@@ -1,28 +1,30 @@
 # Using redirect route instead of simple routes since it supports strict_slash
 # Simple route: http://webapp-improved.appspot.com/guide/routing.html#simple-routes
 # RedirectRoute: http://webapp-improved.appspot.com/api/webapp2_extras/routes.html#webapp2_extras.routes.RedirectRoute
-from webapp2 import Route
 from webapp2_extras.routes import RedirectRoute
-from web import handlers
+
+from controllers import handlers,pages
 import utils
+
 
 secure_scheme = 'https'
 
 _routes = [
 
     # Retrieve current subject state
-    RedirectRoute('/', handlers.MainPage, name='main', strict_slash=True),
+    RedirectRoute('/', pages.MainPage, name='main', strict_slash=True),
 
-    RedirectRoute('/admin', handlers.AdminPage, name='Admin', strict_slash=True),
-    RedirectRoute('/analytics', handlers.AnalyticsPage, name='Analytics', strict_slash=True),
-    RedirectRoute('/reports', handlers.ReportCardPage, name='ReportCard', strict_slash=True),
+    RedirectRoute('/admin', pages.AdminPage, name='Admin', strict_slash=True),
+    RedirectRoute('/analytics', pages.AnalyticsPage, name='Analytics', strict_slash=True),
+    RedirectRoute('/reports', pages.ReportCardPage, name='ReportCard', strict_slash=True),
 
-     RedirectRoute('/sessions', handlers.SessionsPage, name='Sessions', strict_slash=True),
+    RedirectRoute('/sessions', pages.SessionsPage, name='Sessions', strict_slash=True),
 
     #Tutor Publish
     RedirectRoute('/publishsubjects', handlers.PublishHandler, name='Publish', strict_slash=True),
 
     # Client Subscribe
+    RedirectRoute('/sessions/data', handlers.SessionHandler, name='SessionData', strict_slash=True),
     RedirectRoute('/subscribe', handlers.SubscribeHandler, name='Subscribe', strict_slash=True),
     RedirectRoute('/unsubscribe', handlers.SubscribeHandler, name='Subscribe', strict_slash=True),
 
