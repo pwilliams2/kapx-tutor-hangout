@@ -21,7 +21,8 @@
 
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="//cdn.datatables.net/1.10.5/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="//cdn.datatables.net/plug-ins/f2c75b7247b/integration/bootstrap/3/dataTables.bootstrap.css">
+    <link rel="stylesheet"
+          href="//cdn.datatables.net/plug-ins/f2c75b7247b/integration/bootstrap/3/dataTables.bootstrap.css">
 
     <script src="js/ie-emulation-modes-warning.js"></script>
 
@@ -51,8 +52,8 @@
         <div class="col-sm-3 col-md-2 sidebar">
             <ul class="nav nav-sidebar">
                 <li><a href="/admin">Overview <span class="sr-only">(current)</span></a></li>
-                <li class="active"><a href="#">Sessions</a></li>
-                <li><a href="/surveys">Surveys</a></li>
+                <li><a href="/sessions">Sessions</a></li>
+                <li class="active"><a href="#">Surveys</a></li>
                 <li><a href="/analytics">Analytics</a></li>
                 <li><a href="/reports">Tutor Report Card</a></li>
 
@@ -62,10 +63,20 @@
 
 
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-            <h3 class="page-header">Tutor Hangouts Sessions <i class="fa fa-users"></i></h3>
+            <h3 class="page-header">Tutor Hangouts Surveys <i class="fa fa-thumbs-up"></i></h3>
 
-            <table id="sessions" class="display" cellspacing="0" width="100%">
+            <table id="surveys" class="display" cellspacing="0" width="100%">
+                <thead>
+                <th>#</th>
+                <th>Tutor</th>
+                <th>Student</th>
+                <th>Knowledge</th>
+                <th>Communiations</th>
+                <th>Overall</th>
+                <th>Subject</th>
+                <th>Comments</th>
 
+                </thead>
             </table>
         </div>
     </div>
@@ -78,7 +89,9 @@
 
 <!-- Compiled and minified Bootstrap JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
-<script src="js/sessions.js"></script>
 
-</body>
-</html>
+<script src="js/surveys.js"></script>
+
+</
+body >
+< / html >

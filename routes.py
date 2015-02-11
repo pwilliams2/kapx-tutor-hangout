@@ -17,8 +17,8 @@ _routes = [
     RedirectRoute('/admin', pages.AdminPage, name='Admin', strict_slash=True),
     RedirectRoute('/analytics', pages.AnalyticsPage, name='Analytics', strict_slash=True),
     RedirectRoute('/reports', pages.ReportCardPage, name='ReportCard', strict_slash=True),
-
     RedirectRoute('/sessions', pages.SessionsPage, name='Sessions', strict_slash=True),
+    RedirectRoute('/surveys', pages.SurveysPage, name='Surveys', strict_slash=True),
 
     #Tutor Publish
     RedirectRoute('/publishsubjects', handlers.PublishHandler, name='Publish', strict_slash=True),
@@ -28,7 +28,8 @@ _routes = [
     RedirectRoute('/subscribe', handlers.SubscribeHandler, name='Subscribe', strict_slash=True),
     RedirectRoute('/unsubscribe', handlers.SubscribeHandler, name='Subscribe', strict_slash=True),
 
-    RedirectRoute('/surveys', handlers.SurveyHandler, name='Surveys', strict_slash=True),
+
+    RedirectRoute('/surveys/data', handlers.SurveyHandler, name='Surveys', strict_slash=True),
     RedirectRoute('/subjects', handlers.SubjectsHandler, name='Subjects', strict_slash=True),
     RedirectRoute('/heartbeat', handlers.HeartbeatHandler, name='Heartbeat', strict_slash=True),
     RedirectRoute('/logs', utils.LogPage, name='Logs', strict_slash=True),

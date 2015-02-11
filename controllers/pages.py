@@ -118,9 +118,10 @@ class ReportCardPage(BaseHandler):
 class SessionsPage(BaseHandler):
     def get(self):
         """ Get the list of TutorHangoutSessions """
-        sessions = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).order(-TutorHangoutSessions.start).fetch()
+        self.render_template('templates/sessions.html')
 
-        template_data = {'sessions_query': sessions}
-        self.render_template('templates/sessions.html', **template_data)
+class SurveysPage(BaseHandler):
+    def get(self):
+        self.render_template('templates/surveys.html')
 
 

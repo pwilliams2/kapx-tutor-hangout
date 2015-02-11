@@ -4,6 +4,7 @@ import datetime
 from google.appengine.api.datastore_errors import BadValueError
 from google.appengine.runtime.apiproxy_errors import OverQuotaError
 from google.appengine import runtime
+import jsonpickle
 
 import tutor_hangouts_api as hapi
 from apiclient import discovery
@@ -98,6 +99,17 @@ def update_subjects():
         assign_available_tutors(avail_tutors, subjects_list)
 
 
+def dump_json(a_list):
+    if len(a_list) > 0:
+        data = {
+            "data": [item for item in a_list]
+        }
+        return JSONEncoder().encode(data)
+        # return json.dumps(data)
+    else:
+        return {[]}
+
+
 class PublishHandler(BaseHandler):
     def post(self):
         """ Post available tutor subjects
@@ -173,19 +185,15 @@ class SessionHandler(BaseHandler):
         data_list = []
         for session in ths_list:
             start_date = session.start.strftime('%Y-%m-%d %H:%M') if session.start else ''
-            # end_date = session.end.strftime('%Y-%m-%d %H:%M') if session.end else ''
-            survey_id = str(session.survey_key.id) if session.survey_key else ''
+            survey_id = session.survey_key.id() if session.survey_key else ''
+            autolog('survey_id %s' % survey_id)
             duration = str('%10.2f' % session.duration) if session.duration else ''
-            row_list = ['',session.tutor_name, session.participant_name, session.subject,
+            row_list = ['', session.tutor_name, session.participant_name, session.subject,
                         start_date, duration, survey_id]
 
             data_list.append(row_list)
 
-        data = {
-            "data": [ths for ths in data_list]
-        }
-        self.response.out.write(json.dumps(data))
-
+        self.response.out.write(dump_json(data_list))
 
 
 class SubscribeHandler(BaseHandler):
@@ -264,9 +272,6 @@ class SurveyHandler(BaseHandler):
         """ Retrieve TutorSurveys  """
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
 
-        if self.request.get('data'):  # Data request
-            return self.get_data()
-
         student_id = self.request.get('student_id')
         gid = self.request.get('gid')
 
@@ -276,8 +281,7 @@ class SurveyHandler(BaseHandler):
         else:
             surveys = TutorSurveys.query(ancestor=hapi.TUTOR_SURVEYS_PARENT_KEY).fetch()
 
-        if len(surveys) > 0:
-            return self.response.out.write(surveys)
+        self.response.out.write(dump_json(surveys))
 
     def post(self):
         """ Post surveys  """
@@ -339,7 +343,7 @@ class SurveyHandler(BaseHandler):
         session = TutorHangoutSessions.query(
             ndb.AND(TutorHangoutSessions.participant_id == student_id, TutorHangoutSessions.gid == gid)).fetch()
         if session:
-            session[0].survey_id = survey_key
+            session[0].survey_key = survey_key
             session[0].put()
             return True
         else:
