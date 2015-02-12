@@ -2,7 +2,6 @@
  * Created by admin on 2/10/15.
  */
 
-
 Morris.Area({
   element: 'area-usage',
   data: [
@@ -29,3 +28,4 @@ Morris.Area({
   parseTime:true
 
 });
+
