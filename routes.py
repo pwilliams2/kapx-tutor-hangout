@@ -15,6 +15,7 @@ _routes = [
     RedirectRoute('/', pages.MainPage, name='main', strict_slash=True),
 
     RedirectRoute('/admin', pages.AdminPage, name='Admin', strict_slash=True),
+    RedirectRoute('/overview', pages.OverviewPage, name='Overview', strict_slash=True),
     RedirectRoute('/analytics', pages.AnalyticsPage, name='Analytics', strict_slash=True),
     RedirectRoute('/reports', pages.ReportCardPage, name='ReportCard', strict_slash=True),
     RedirectRoute('/sessions', pages.SessionsPage, name='Sessions', strict_slash=True),

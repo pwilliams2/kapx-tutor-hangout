@@ -111,6 +111,10 @@ class MainPage(BaseHandler):
     def get(self):
         self.render_template('templates/index.html')
 
+class OverviewPage(BaseHandler):
+    def get(self):
+        self.render_template('templates/overview.html')
+
 class ReportCardPage(BaseHandler):
     def get(self):
         self.render_template('templates/report_card.html')

@@ -55,12 +55,12 @@
         <!-- Sidebar -->
         <div class="col-sm-3 col-md-2 sidebar">
             <ul class="nav nav-sidebar">
-                <li><a href="/admin">Overview <span class="sr-only">(current)</span></a></li>
+                <li><a href="/overview">Overview</a></li>
                 <li><a href="/sessions">Sessions</a></li>
                 <li><a href="/surveys">Surveys</a></li>
                 <li><a href="/analytics">Analytics</a></li>
                 <li class="active"><a href="#">Tutor Report Card</a></li>
-
+                <li><a href="/admin">Admin</a></li>
             </ul>
 
         </div>
@@ -69,132 +69,16 @@
             <h3 class="page-header">Tutor Report Card <i class="fa fa-pencil-square-o"></i></h3>
 
             <div class="row">
-                <div class="col-lg-2 col-md-4">
-                    <div class="panel panel-primary">
-                        <div class="panel-heading">
-                            <div class="row">
-                                <div class="col-xs-3">
-                                    <i class="fa fa-calculator fa-3x"></i>
-                                </div>
-                                <div class="col-xs-9 text-right">
-                                    <div class="huge">2/1</div>
-                                    <div class="text-left">Math</div>
-                                </div>
-                            </div>
-                        </div>
-                        <a href="#">
-                            <div class="panel-footer">
-                                <span class="pull-left">View Details</span>
-                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
 
-                                <div class="clearfix"></div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4">
-                    <div class="panel panel-green">
-                        <div class="panel-heading">
-                            <div class="row">
-                                <div class="col-xs-3">
-                                    <i class="fa fa-flask fa-3x"></i>
-                                </div>
-                                <div class="col-xs-9 text-right">
-                                    <div class="huge">2/0</div>
-                                    <div class="text-left">Science</div>
-                                </div>
-                            </div>
-                        </div>
-                        <a href="#">
-                            <div class="panel-footer">
-                                <span class="pull-left">View Details</span>
-                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
-
-                                <div class="clearfix"></div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4">
-                    <div class="panel panel-yellow">
-                        <div class="panel-heading">
-                            <div class="row">
-                                <div class="col-xs-3">
-                                    <i class="fa fa-book fa-3x"></i>
-                                </div>
-                                <div class="col-xs-9 text-right">
-                                    <div class="huge">1/0</div>
-                                    <div class="text-left">Writing</div>
-                                </div>
-                            </div>
-                        </div>
-                        <a href="#">
-                            <div class="panel-footer">
-                                <span class="pull-left">View Details</span>
-                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
-
-                                <div class="clearfix"></div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4">
-                    <div class="panel panel-red">
-                        <div class="panel-heading">
-                            <div class="row">
-                                <div class="col-xs-3">
-                                    <i class="fa fa-briefcase fa-3x"></i>
-                                </div>
-                                <div class="col-xs-9 text-right">
-                                    <div class="huge">2/1</div>
-                                    <div class="text-left">Business</div>
-                                </div>
-                            </div>
-                        </div>
-                        <a href="#">
-                            <div class="panel-footer">
-                                <span class="pull-left">View Details</span>
-                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
-
-                                <div class="clearfix"></div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <div class="row">
-                                <div class="col-xs-3">
-                                    <i class="fa fa-rocket fa-3x"></i>
-                                </div>
-                                <div class="col-xs-9 text-right">
-                                    <div class="huge">1/0</div>
-                                    <div class="text-left">Technology</div>
-                                </div>
-                            </div>
-                        </div>
-                        <a href="#">
-                            <div class="panel-footer">
-                                <span class="pull-left">View Details</span>
-                                <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
-
-                                <div class="clearfix"></div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
             </div>
             <!-- /.row -->
 
 
-            <h4 class="sub-header">Tutor Surveys by Month</h4>
-
             <div class="col-md-8">
-
+                <h4 class="sub-header">Tutor Survey Avg Ratings</h4>
                 <div id="bar-survey" class="graph" style="height: 250px;"></div>
             </div>
-            <!-- comments -->
+                    <!-- comments -->
             <div class="col-md-3 col-offset-1">
                 <div class="chat-panel panel panel-default">
                     <div class="panel-heading">
@@ -276,6 +160,11 @@
                     </div>
                 </div>
             </div>
+             <div class="col-md-8">
+                 <h4 class="sub-header"># Sessions</h4>
+                <div id="line-sessions" class="graph" style="height: 250px;"></div>
+            </div>
+
         </div>
     </div>
 </div>

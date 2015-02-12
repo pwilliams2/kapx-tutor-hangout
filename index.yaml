@@ -34,6 +34,17 @@ indexes:
 - kind: TutorSurveys
   ancestor: yes
   properties:
+  - name: create_date
+
+- kind: TutorSurveys
+  ancestor: yes
+  properties:
+  - name: create_date
+    direction: desc
+
+- kind: TutorSurveys
+  ancestor: yes
+  properties:
   - name: tutor_id
     direction: desc
   - name: student_id

@@ -28,3 +28,21 @@ Morris.Bar({
     hideHover: 'auto'
 
 });
+
+Morris.Line({
+  element: 'line-sessions',
+  data: [
+    { y: 'Jan 2015', a: 10 },
+    { y: 'Feb', a: 17 },
+    { y: 'Mar', a: 15 },
+    { y: 'Apr', a: 27 },
+    { y: 'May', a: 18 },
+    { y: 'Jun', a: 13 },
+    { y: 'Jul', a: 12}
+  ],
+  xkey: 'y',
+  ykeys: ['a'],
+parseTime: false,
+  labels: ['Client Sessions']
+});
+

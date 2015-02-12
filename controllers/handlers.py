@@ -4,7 +4,6 @@ import datetime
 from google.appengine.api.datastore_errors import BadValueError
 from google.appengine.runtime.apiproxy_errors import OverQuotaError
 from google.appengine import runtime
-import jsonpickle
 
 import tutor_hangouts_api as hapi
 from apiclient import discovery
@@ -38,15 +37,11 @@ def assign_available_tutors(avail_tutors, subjects_list):
     :param subjects_list: the tutored subjects
     :return:
     """
-    avail_subjects = []
-    for tutor in avail_tutors:
-        json_tutor_subjects = json.loads(tutor.subjects)
-        for tutor_subject in json_tutor_subjects:
-            subject = tutor_subject['subject']
-            avail_subjects.append(subject)
 
+    for tutor in avail_tutors:
         done = []  # Subjects that are already updated.
-        if len(avail_subjects) == 0:  # No available tutors, so set all subjects to unavailable
+
+        if len(tutor.subjects) == 0:  # No available tutors, so set all subjects to unavailable
             subjects = []
             for subject in subjects_list:
                 if subject.subject in done:
@@ -56,7 +51,7 @@ def assign_available_tutors(avail_tutors, subjects_list):
             ndb.put_multi(subjects)
             break
 
-        for avail_subject in avail_subjects:
+        for avail_subject in tutor.subjects:
             for subject in subjects_list:
                 if subject.subject in done:
                     continue
@@ -119,33 +114,40 @@ class PublishHandler(BaseHandler):
         self.publish_tutor()
         update_subjects()
 
-
     def publish_tutor(self):
         """ Insert/update the subjects for which the tutor is available """
 
         try:
-            ts = TutorSubjects.query(TutorSubjects.person_id == self.request.get('pid')).fetch(1)
+            tutor = TutorSubjects.query(TutorSubjects.person_id == self.request.get('pid')).fetch(1)
 
             count = int(self.request.get('count')) if self.request.get('count') else 0
-            max = int(self.request.get('maxParticipants')) if self.request.get('maxParticipants') else 1
+            max_participants = int(self.request.get('maxParticipants')) if self.request.get('maxParticipants') else 1
+            inp_subjects = self.request.get('subjects') if self.request.get('subjects') else ''
 
-            if ts:
+            avail_subjects = []
+            if len(inp_subjects) > 0:
+                subjects_list = json.loads(inp_subjects)
+                for tutor_subject in subjects_list:
+                    subject = str(tutor_subject['subject'])
+                    avail_subjects.append(subject)
+
+            if tutor:
                 autolog("Updating tutor subject")
-                ts[0].gid = self.request.get('gid')
-                ts[0].subjects = self.request.get('subjects')
-                ts[0].participants_count = count
-                ts[0].max_participants = max
-                ts_key = ts[0].put()
+                tutor[0].gid = self.request.get('gid')
+                tutor[0].subjects = avail_subjects
+                tutor[0].participants_count = count
+                tutor[0].max_participants = max_participants
+                ts_key = tutor[0].put()
             else:
                 autolog("New tutor")
-                ts = TutorSubjects(parent=hapi.TUTOR_SUBJECTS_PARENT_KEY,
-                                   person_id=self.request.get('pid'),
-                                   subjects=self.request.get('subjects'),
-                                   tutor_name=self.request.get('pName'),
-                                   gid=self.request.get('gid'),
-                                   max_participants=max,
-                                   participants_count=count)
-                ts_key = ts.put()
+                tutor = TutorSubjects(parent=hapi.TUTOR_SUBJECTS_PARENT_KEY,
+                                      person_id=self.request.get('pid'),
+                                      subjects=avail_subjects,
+                                      tutor_name=self.request.get('pName'),
+                                      gid=self.request.get('gid'),
+                                      max_participants=max_participants,
+                                      participants_count=count)
+                ts_key = tutor.put()
             self.response.out.write(ts_key)
         except Exception, e:
             autolog('msg: ' + str(e))
@@ -279,7 +281,8 @@ class SurveyHandler(BaseHandler):
             surveys = TutorSurveys.query(
                 ndb.AND(TutorSurveys.student_id == student_id, TutorSurveys.gid == gid)).fetch()
         else:
-            surveys = TutorSurveys.query(ancestor=hapi.TUTOR_SURVEYS_PARENT_KEY).fetch()
+            surveys = TutorSurveys.query(ancestor=hapi.TUTOR_SURVEYS_PARENT_KEY).order(
+                -TutorSurveys.create_date).fetch()
 
         self.response.out.write(dump_json(surveys))
 

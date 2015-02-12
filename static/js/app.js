@@ -17,7 +17,6 @@
  * the License.
  */
 var SERVER_PATH = '//kx-tutor-hangout-app.appspot.com/';
-var SERVER_PATH_API = '//kx-tutor-hangout-app.appspot.com/_ah/api/tutorhangouts/' //only works for GET
 var MAX_COUNT = 2;
 var hangoutURL = '';
 var gid = '';

@@ -10,7 +10,7 @@ class TutorSubjects(EndpointsModel):
         ('entityKey', 'person_id', 'subjects', 'tutor_name', 'create_date', 'last_modified', 'gid', 'max_participants',
          'participants_count')
     person_id = ndb.StringProperty()  # participant.person.id
-    subjects = ndb.StringProperty()
+    subjects = ndb.StringProperty(repeated=True)
     tutor_name = ndb.StringProperty()
     create_date = ndb.DateTimeProperty(auto_now_add=True)
     last_modified = ndb.DateTimeProperty(auto_now=True)
