@@ -27,29 +27,10 @@ var count = 0;
 var participants_ = null;
 var subjects_ = '';
 
-// Publish tutor availability for subject(s)
-function publish(subjects) {
-    console.log('Selected subject' + subjects);
-    subjects_ = subjects;
-    var arr = hangoutURL.split('/');
-    gid = arr[arr.length - 1];
-    pid = localParticipant.person.id;
 
-    var payload = 'subjects=' + subjects
-        + '&gid=' + gid
-        + '&pid=' + pid
-        + '&pName=' + localParticipant.person.displayName
-        + '&count=' + count
-        + '&maxParticipants=' + MAX_COUNT;
-
-    try {
-        $('#message').html("");
-        httpRequest('POST', SERVER_PATH, 'publishsubjects', payload);
-        $('#message').html("Submitted");
-    } catch (e) {
-        console.log(e);
-    }
-
+// Post a heartbeat to inform host that this tutor H-O is still available
+function heartBeat() {
+    httpRequest('GET', SERVER_PATH, 'heartbeat', 'gid=' + gid + '&pid=' + pid + "&count=" + count);
 }
 
 function httpRequest(method, server, path, params) {
@@ -78,6 +59,31 @@ function httpRequest(method, server, path, params) {
         http.send(params);
     }
     //console.log(server + path + '?' + params);
+}
+
+// Publish tutor availability for subject(s)
+function publish(subjects) {
+    console.log('Selected subject' + subjects);
+    subjects_ = subjects;
+    var arr = hangoutURL.split('/');
+    gid = arr[arr.length - 1];
+    pid = localParticipant.person.id;
+
+    var payload = 'subjects=' + subjects
+        + '&gid=' + gid
+        + '&pid=' + pid
+        + '&pName=' + localParticipant.person.displayName
+        + '&count=' + count
+        + '&maxParticipants=' + MAX_COUNT;
+
+    try {
+        $('#message').html("");
+        httpRequest('POST', SERVER_PATH, 'publishsubjects', payload);
+        $('#message').html("Submitted");
+    } catch (e) {
+        console.log(e);
+    }
+
 }
 
 function updateStateUi(state) {
@@ -128,11 +134,6 @@ function updateParticipantsUi(participants) {
     count = participants.length; // Update the count
 }
 
-
-// Post a heartbeat to inform host that this tutor H-O is still available
-function heartBeat() {
-    httpRequest('GET', SERVER_PATH, 'heartbeat', 'gid=' + gid + '&pid=' + pid + "&count=" + count);
-}
 
 function postSurvey() {
     console.log('postSurvey');

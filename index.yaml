@@ -18,6 +18,25 @@ indexes:
 - kind: TutorHangoutSessions
   ancestor: yes
   properties:
+  - name: duration
+  - name: participant_name
+  - name: start
+  - name: subject
+  - name: survey_key
+  - name: tutor_name
+
+- kind: TutorHangoutSessions
+  ancestor: yes
+  properties:
+  - name: duration
+  - name: participant_name
+  - name: start
+  - name: subject
+  - name: tutor_name
+
+- kind: TutorHangoutSessions
+  ancestor: yes
+  properties:
   - name: start
     direction: desc
 

@@ -7,9 +7,9 @@ from endpoints_proto_datastore.ndb import EndpointsModel
 
 class TutorSubjects(EndpointsModel):
     _message_fields_schema = \
-        ('entityKey', 'person_id', 'subjects', 'tutor_name', 'create_date', 'last_modified', 'gid', 'max_participants',
+        ('entityKey', 'tutor_id', 'subjects', 'tutor_name', 'create_date', 'last_modified', 'gid', 'max_participants',
          'participants_count')
-    person_id = ndb.StringProperty()  # participant.person.id
+    tutor_id = ndb.StringProperty()  # participant.person.id
     subjects = ndb.StringProperty(repeated=True)
     tutor_name = ndb.StringProperty()
     create_date = ndb.DateTimeProperty(auto_now_add=True)
@@ -32,7 +32,7 @@ class TutorHangoutSessions(EndpointsModel):
     start = ndb.DateTimeProperty(auto_now_add=True)
     end = ndb.DateTimeProperty()
     duration = ndb.FloatProperty()
-    survey_key = ndb.KeyProperty()
+    survey_key = ndb.StringProperty()
 
 
 class HangoutSubjects(EndpointsModel):
