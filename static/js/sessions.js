@@ -1,11 +1,23 @@
 /**
  * Created by admin on 2/11/15.
  */
-function popupSurvey(val)
-{
-    alert('survey click ' + val);
-    //Get data
 
+var SERVER_URL = '//kx-tutor-hangout-app.appspot.com/';
+var SERVER_URL = '//localhost:8080/';
+
+function popupSurvey(val) {
+      var xmlhttp = new XMLHttpRequest();
+      xmlhttp.onreadystatechange=function()
+      {
+      if (xmlhttp.status==200)
+        {
+            var jsonResponse = JSON.parse(xmlhttp.responseText);
+            console.log(jsonResponse);
+        }
+      }
+    xmlhttp.open("GET", SERVER_URL + "surveys/data?survey_key=" + val,true);
+    xmlhttp.send();
+    return true;
     //Update survey modal
 
     //Show survey modal
@@ -19,7 +31,8 @@ $(document).ready(function () {
             {data: "tutor_name"},
             {data: "participant_name"},
             {data: "subject"},
-            {data: "start", "class": "center",
+            {
+                data: "start", "class": "center",
                 "render": function (val, type, data, meta) {
                     if (type == "display") {
                         val = moment(val).format('MM/DD/YYYY h:mma');
@@ -27,7 +40,8 @@ $(document).ready(function () {
                     return val;
                 }
             },
-            {data: "duration", "class": "center",
+            {
+                data: "duration", "class": "center",
                 "render": function (val, type, data, meta) {
                     if (type == "display") {
                         if (val) {
@@ -37,16 +51,17 @@ $(document).ready(function () {
                     return val;
                 }
             },
-            {data: "survey_key", "class": "center",
+            {
+                data: "survey_key",
                 "render": function (val, type, data, meta) {
                     if (type == "display") {
                         if (val) {
-                            val = '<a href="#" onClick=popupSurvey(val)>Survey</a>'
+                            val = '<a href="#" class="survey-link" onClick=popupSurvey("' + val + '")>Survey</a>'
                         }
-                        //else
-                        //{
-                        //    val = '<a href="#" onClick=popupSurvey(12345)>Survey</a>'
-                        //}
+                        else
+                        {
+                            //val = '<a href="#" onClick=popupSurvey(12345)>Survey</a>';
+                        }
                     }
                     return val;
                 }
@@ -71,3 +86,4 @@ $(document).ready(function () {
     });
 
 });
+

@@ -58,7 +58,6 @@ function httpRequest(method, server, path, params) {
         http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         http.send(params);
     }
-    //console.log(server + path + '?' + params);
 }
 
 // Publish tutor availability for subject(s)
