@@ -110,6 +110,8 @@ function updateParticipantsUi(participants) {
     gid = arr[arr.length - 1];
 
     if (participants.length > 1 && participants.length > count) {//Add
+        var appData = gadgets.views.getParams()['appData'];
+        console.log('appData:' + appData);
         console.log('subscribing...');
         $('.clientParticipant').html(participants_[0].person.displayName);
 
@@ -195,10 +197,6 @@ function init() {
             gapi.hangout.onParticipantsChanged.add(function (eventObj) {
                 updateParticipantsUi(eventObj.participants);
             });
-
-            //gapi.hangout.onParticipantsRemoved.add(function (eventObj) {
-            //    removeParticipants(eventObj.participants);
-            //});
 
             gapi.hangout.onApiReady.remove(apiReady);
         }
