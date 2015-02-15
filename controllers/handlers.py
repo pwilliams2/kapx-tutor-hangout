@@ -102,7 +102,7 @@ def dump_json(a_list):
         return JSONEncoder().encode(data)
         # return json.dumps(data)
     else:
-        return {[]}
+        return [{}]
 
 
 class HeartbeatHandler(BaseHandler):
@@ -195,7 +195,8 @@ class SessionHandler(BaseHandler):
         #
         # data_list.append(row_list)
 
-        self.response.out.write(dump_json(ths_list))
+        return self.response.out.write(dump_json(ths_list))
+
 
 
 class SubscribeHandler(BaseHandler):

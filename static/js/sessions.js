@@ -2,27 +2,37 @@
  * Created by admin on 2/11/15.
  */
 
-var SERVER_URL = '//kx-tutor-hangout-app.appspot.com/';
-var SERVER_URL = '//localhost:8080/';
 
-function popupSurvey(val) {
-      var xmlhttp = new XMLHttpRequest();
-      xmlhttp.onreadystatechange=function()
-      {
-      if (xmlhttp.status==200)
-        {
-            var jsonResponse = JSON.parse(xmlhttp.responseText);
-            console.log(jsonResponse);
+$(function () {
+    popupSurvey = function (val) {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (xmlhttp.status == 200) {
+                var jsonResponse = JSON.parse(xmlhttp.responseText);
+                updateModal(jsonResponse);
+            }
         }
-      }
-    xmlhttp.open("GET", SERVER_URL + "surveys/data?survey_key=" + val,true);
-    xmlhttp.send();
-    return true;
-    //Update survey modal
+        xmlhttp.open("GET", "/surveys/data?survey_key=" + val, true);
+        xmlhttp.send();
 
-    //Show survey modal
-}
-$(document).ready(function () {
+        //Update survey modal
+
+
+        return true;
+    }
+
+    updateModal = function (survey) {
+        console.log(survey);
+
+        $("#surveyModal #knowledge").html(survey.knowledge);
+        $("#surveyModal #communications").html(survey.communications);
+        $("#surveyModal #overall").html(survey.overall);
+        $("#surveyModal #comments").html(survey.comments);
+
+        //Show survey modal
+        $("#surveyModal").modal('show');
+
+    }
 
     var t = $('#sessions').DataTable({
         "ajax": "/sessions/data",
@@ -56,10 +66,10 @@ $(document).ready(function () {
                 "render": function (val, type, data, meta) {
                     if (type == "display") {
                         if (val) {
-                            val = '<a href="#" class="survey-link" onClick=popupSurvey("' + val + '")>Survey</a>'
+                            val = '<a href="#" class="survey-link" onClick=popupSurvey("' + val + '");>Survey</a>'
+                            //val = '<a class="survey-link">Survey</a>'
                         }
-                        else
-                        {
+                        else {
                             //val = '<a href="#" onClick=popupSurvey(12345)>Survey</a>';
                         }
                     }
@@ -85,5 +95,11 @@ $(document).ready(function () {
         });
     });
 
+    //$('.survey-link').click(function () {
+    //      console.log('survey-link clicked');
+    //      var val = $(this).find(".survey-link").text();
+    //      popupSurvey(val)
+    //  });
 });
+
 
