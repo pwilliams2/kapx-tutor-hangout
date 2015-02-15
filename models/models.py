@@ -18,7 +18,6 @@ class TutorSubjects(EndpointsModel):
     max_participants = ndb.IntegerProperty()
     participants_count = ndb.IntegerProperty()
 
-
 class TutorHangoutSessions(EndpointsModel):
     _message_fields_schema = (
         'entityKey', 'tutor_id', 'subject', 'gid', 'tutor_name', 'participant_id', 'participant_name', 'start', 'end',

@@ -1,5 +1,6 @@
 import json
 import datetime
+from Queue import Queue
 
 from google.appengine.api.datastore_errors import BadValueError
 from google.appengine.runtime.apiproxy_errors import OverQuotaError
@@ -32,7 +33,7 @@ def remove_stale_sessions():
 
 
 def assign_available_tutors(avail_tutors, subjects_list):
-    """ Assign the tutors in the avail_tutors_list to the  subjects
+    """ Assign the tutors in the avail_tutors_list to the subjects in the subjects_list
     :param avail_tutors_list: available tutors and their subjects
     :param subjects_list: the tutored subjects
     :return:
@@ -47,6 +48,7 @@ def assign_available_tutors(avail_tutors, subjects_list):
                 if subject.subject in done:
                     continue
                 subject.is_available = False
+                subject.gid = ''
                 subjects.append(subject)
             ndb.put_multi(subjects)
             break
@@ -70,10 +72,44 @@ def assign_available_tutors(avail_tutors, subjects_list):
                     subject.put()
                 except OverQuotaError, e:
                     autolog('Over Quota Error, bypassing for now: ' + str(e))
+                    return False
+    return True
+
+
+def assign_available_tutors(subjects_list):
+    """ Assign the tutors in the avail_tutors_list to the subjects in the subjects_list
+    :param subjects_list: the tutored subjects
+    :return:
+    """
+
+    try:
+        subjects = []
+        autolog('tutorQueue size %s' % str(tutorQueue.qsize()))
+        for subject in subjects_list:  # Get next an available tutor in q
+            while not tutorQueue.empty():
+                tutor = tutorQueue.get()
+                if subject in tutor.subjects and tutor.participants_count < tutor.max_participants:
+                    subject.gid = tutor.gid  # Assign a tutor to the subject
+                    subject.is_available = True
+                    subjects.append(subject)
+                    break
+                else:
+                    tutorQueue.put(tutor)  # Put the tutor back in the q
+            # No available tutor found in the q for subject
+            subject.is_available = False
+            subject.gid = ''
+            subjects.append(subject)
+        ndb.put_multi(subjects)
+        return True
+    except OverQuotaError, e:
+        autolog('Over Quota Error, bypassing for now: ' + str(e))
+        raise
+    finally:
+        tutorQueue.task_done()
 
 
 def update_subjects():
-    '''Update the subjects table to reflect the availability of the current tutor'''
+    """ Update the subjects table to reflect the availability of the current tutor """
 
     subjects_list = HangoutSubjects.query(ancestor=hapi.SUBJECTS_PARENT_KEY).fetch()
 
@@ -91,7 +127,8 @@ def update_subjects():
                 autolog('Over Quota Error, bypassing for now: ' + str(e))
     else:
         autolog('There are avail_tutors.')
-        assign_available_tutors(avail_tutors, subjects_list)
+        # assign_available_tutors(avail_tutors, subjects_list)
+        assign_available_tutors(subjects_list)
 
 
 def dump_json(a_list):
@@ -103,6 +140,9 @@ def dump_json(a_list):
         # return json.dumps(data)
     else:
         return [{}]
+
+
+tutorQueue = Queue()  # FIFO q to serve subscribers
 
 
 class HeartbeatHandler(BaseHandler):
@@ -172,6 +212,9 @@ class PublishHandler(BaseHandler):
                                       max_participants=max_participants,
                                       participants_count=count)
                 ts_key = tutor.put()
+
+                # Add the tutor to the FIFO queue.  They're added back when they have 0 participants.
+                tutorQueue.put(tutor)  # Tutor is removed from the queue
             self.response.out.write(ts_key.urlsafe())
         except Exception, e:
             autolog('msg: ' + str(e))
@@ -183,20 +226,7 @@ class SessionHandler(BaseHandler):
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
 
         ths_list = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).fetch()
-
-        # data_list = []
-        # for session in ths_list:
-        # start_date = session.start.strftime('%Y-%m-%d %H:%M') if session.start else ''
-        # survey_id = session.survey_key.id() if session.survey_key else ''
-        # autolog('survey_id %s' % survey_id)
-        # duration = str('%10.2f' % session.duration) if session.duration else ''
-        # row_list = [session.tutor_name, session.participant_name, session.subject,
-        # start_date, duration, survey_id]
-        #
-        # data_list.append(row_list)
-
         return self.response.out.write(dump_json(ths_list))
-
 
 
 class SubscribeHandler(BaseHandler):
@@ -228,6 +258,9 @@ class SubscribeHandler(BaseHandler):
                 session[0].end = now
                 session[0].duration = delta.total_seconds() / 60  # minutes
                 session[0].put()
+
+                tutor = TutorSubjects.query(TutorSubjects.tutor_id == tutor_id).fetch(1)
+                tutorQueue.put(tutor)
 
         else:  # Create new TutorHangoutSession
             autolog("Creating new session")
