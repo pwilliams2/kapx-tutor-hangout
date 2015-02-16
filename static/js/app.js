@@ -150,7 +150,7 @@ function postSurvey() {
 
     try {
         $('#clientMessage').html("");
-        httpRequest('POST', SERVER_PATH, 'surveys', payload);
+        httpRequest('POST', SERVER_PATH, 'surveys/data', payload);
         $('#clientMessage').html("Submitted");
     } catch (e) {
         console.log(e);

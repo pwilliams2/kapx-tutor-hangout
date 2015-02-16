@@ -1,6 +1,6 @@
 import json
 import datetime
-from Queue import Queue
+from collections import deque
 
 from google.appengine.api.datastore_errors import BadValueError
 from google.appengine.runtime.apiproxy_errors import OverQuotaError
@@ -11,6 +11,9 @@ from apiclient import discovery
 from utils import JSONEncoder, autolog
 from lib.base import BaseHandler
 from models.models import *
+
+
+tutorQueue = deque()  # FIFO q to serve subscribers
 
 
 def remove_stale_sessions():
@@ -83,29 +86,36 @@ def assign_available_tutors(subjects_list):
     """
 
     try:
-        subjects = []
-        autolog('tutorQueue size %s' % str(tutorQueue.qsize()))
+        autolog('tutorQueue size %s' % str(len(tutorQueue)))
+
+        size = len(tutorQueue)
         for subject in subjects_list:  # Get next an available tutor in q
-            while not tutorQueue.empty():
-                tutor = tutorQueue.get()
-                if subject in tutor.subjects and tutor.participants_count < tutor.max_participants:
-                    subject.gid = tutor.gid  # Assign a tutor to the subject
-                    subject.is_available = True
-                    subjects.append(subject)
-                    break
-                else:
-                    tutorQueue.put(tutor)  # Put the tutor back in the q
-            # No available tutor found in the q for subject
+            i = 0
             subject.is_available = False
             subject.gid = ''
-            subjects.append(subject)
-        ndb.put_multi(subjects)
+
+            while tutorQueue and i < size:
+                i += 1
+                current_tutor = tutorQueue.pop()
+                tutor_list = TutorSubjects.query(ndb.AND(TutorSubjects.gid == current_tutor.gid,
+                                                         TutorSubjects.tutor_id == current_tutor.tutor_id)).fetch(1)
+                if len(tutor_list) > 0:
+                    tutor = tutor_list[0]
+
+                    if subject.subject in tutor.subjects and tutor.participants_count < tutor.max_participants:
+                        autolog('Tutor match found for: %s' % subject)
+                        subject.gid = tutor.gid  # Assign a tutor to the subject
+                        subject.is_available = True
+                        subject.put()
+                        tutorQueue.appendleft(tutor)  # Put the tutor back in the q
+                        break
+                    else:
+                        tutorQueue.appendleft(tutor)  # Put the tutor back in the q
+            subject.put()
         return True
     except OverQuotaError, e:
         autolog('Over Quota Error, bypassing for now: ' + str(e))
         raise
-    finally:
-        tutorQueue.task_done()
 
 
 def update_subjects():
@@ -142,7 +152,22 @@ def dump_json(a_list):
         return [{}]
 
 
-tutorQueue = Queue()  # FIFO q to serve subscribers
+def remove_tutor_from_queue(tutor_id):
+    """
+    :param tutor_id:
+    :return:
+    """
+
+    size = len(tutorQueue)
+    i = 0
+    while i < size:
+        i += 1
+        tutor = tutorQueue.pop()
+        if tutor.tutor_id == tutor_id:
+            return True
+        else:
+            tutorQueue.appendleft(tutor)  # Put it back if it doesn't match
+    return False
 
 
 class HeartbeatHandler(BaseHandler):
@@ -182,7 +207,8 @@ class PublishHandler(BaseHandler):
         """ Insert/update the subjects for which the tutor is available """
 
         try:
-            tutor = TutorSubjects.query(TutorSubjects.tutor_id == self.request.get('pid')).fetch(1)
+            tutor = TutorSubjects.query(ndb.AND(TutorSubjects.tutor_id == self.request.get('pid'),
+                                                TutorSubjects.gid == self.request.get('gid'))).fetch(1)
 
             count = int(self.request.get('count')) if self.request.get('count') else 0
             max_participants = int(self.request.get('maxParticipants')) if self.request.get('maxParticipants') else 1
@@ -195,13 +221,18 @@ class PublishHandler(BaseHandler):
                     subject = str(tutor_subject['subject'])
                     avail_subjects.append(subject)
 
-            if tutor:
+            if len(tutor) > 0:
+                tutor = tutor[0]
                 autolog("Updating tutor subject")
-                tutor[0].gid = self.request.get('gid')
-                tutor[0].subjects = avail_subjects
-                tutor[0].participants_count = count
-                tutor[0].max_participants = max_participants
-                ts_key = tutor[0].put()
+                tutor.gid = self.request.get('gid')
+                tutor.subjects = avail_subjects
+                tutor.participants_count = count
+                tutor.max_participants = max_participants
+                ts_key = tutor.put()
+
+                autolog("Tutor subjects: %s" % str(tutor.subjects))
+                if len(tutorQueue) == 0:
+                    tutorQueue.appendleft(tutor)
             else:
                 autolog("New tutor")
                 tutor = TutorSubjects(parent=hapi.TUTOR_SUBJECTS_PARENT_KEY,
@@ -213,8 +244,8 @@ class PublishHandler(BaseHandler):
                                       participants_count=count)
                 ts_key = tutor.put()
 
-                # Add the tutor to the FIFO queue.  They're added back when they have 0 participants.
-                tutorQueue.put(tutor)  # Tutor is removed from the queue
+                # Add the tutor to the FIFO queue.
+                tutorQueue.appendleft(tutor)
             self.response.out.write(ts_key.urlsafe())
         except Exception, e:
             autolog('msg: ' + str(e))
@@ -235,32 +266,40 @@ class SubscribeHandler(BaseHandler):
     def get(self):
         """ Get the list of TutorHangoutSessions """
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
-        return TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).fetch()
+        ths_list = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).fetch()
+        return self.response.out.write(dump_json(ths_list))
+        # return TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).fetch()
 
     def post(self):
         """ Subscribe client for H-O session"""
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         autolog("updating tutor hangout session")
         tutor_id = self.request.get('tutorId')
+        student_id = self.request.get('studentId')
         gid = self.request.get('gid')
 
         if self.request.get('exit'):
             """ The session ended, update the session end"""
             autolog("Updating session end")
             session = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(ndb.AND(
-                TutorHangoutSessions.tutor_id == tutor_id, TutorHangoutSessions.gid == gid)).fetch(1)
+                TutorHangoutSessions.tutor_id == tutor_id,
+                TutorHangoutSessions.participant_id == student_id,
+                TutorHangoutSessions.gid == gid,
+                not TutorHangoutSessions.duration)).fetch(1)
             if not session:
                 autolog(
                     'TutorHangoutSession was not found: tutor_id {%s}, gid{%s}' % (tutor_id, gid))
             else:
                 now = datetime.datetime.now()
-                delta = now - session[0].start
-                session[0].end = now
-                session[0].duration = delta.total_seconds() / 60  # minutes
-                session[0].put()
+            delta = now - session[0].start
+            session[0].end = now
+            session[0].duration = delta.total_seconds() / 60  # minutes
+            session[0].put()
 
-                tutor = TutorSubjects.query(TutorSubjects.tutor_id == tutor_id).fetch(1)
-                tutorQueue.put(tutor)
+            tutor = TutorSubjects.query(TutorSubjects.tutor_id == tutor_id).fetch(1)
+
+            # Add tutor back to queue
+            tutorQueue.appendleft(tutor)
 
         else:  # Create new TutorHangoutSession
             autolog("Creating new session")
@@ -277,7 +316,9 @@ class SubscribeHandler(BaseHandler):
                                                   participant_name=self.request.get('studentName')
                 )
                 ho_key = ho_session.put()
-                self.response.set_status(200)
+
+                remove_tutor_from_queue(tutor[0].tutor_id)
+
                 self.response.out.write(ho_key.urlsafe())
             else:
                 autolog('No TutorSubjects; can not create a Hangout Session row.')
