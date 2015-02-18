@@ -18,21 +18,17 @@ indexes:
 - kind: TutorHangoutSessions
   ancestor: yes
   properties:
+  - name: gid
+  - name: participant_id
+  - name: tutor_id
   - name: duration
-  - name: participant_name
-  - name: start
-  - name: subject
-  - name: survey_key
-  - name: tutor_name
 
 - kind: TutorHangoutSessions
   ancestor: yes
   properties:
+  - name: gid
+  - name: participant_id
   - name: duration
-  - name: participant_name
-  - name: start
-  - name: subject
-  - name: tutor_name
 
 - kind: TutorHangoutSessions
   ancestor: yes

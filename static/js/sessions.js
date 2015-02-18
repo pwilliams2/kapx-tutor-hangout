@@ -87,7 +87,7 @@ $(function () {
             {"width": "15%", "targets": 1},
             {"width": "15%", "targets": 2}
         ],
-        "order": [[1, 'asc']]
+        "order": [[4, 'desc']]
     });
     t.on('order.dt search.dt', function () {
         t.column(0).nodes().each(function (cell, i) {

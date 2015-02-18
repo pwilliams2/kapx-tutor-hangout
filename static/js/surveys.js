@@ -38,7 +38,7 @@ $(document).ready(function () {
         //        "visible": false
         //    }
         //],
-        "order": [[1, 'asc']]
+        "order": [[2, 'desc']]
     });
     t.on('order.dt search.dt', function () {
         t.column(0).nodes().each(function (cell, i) {

@@ -7,7 +7,6 @@ from google.appengine.runtime.apiproxy_errors import OverQuotaError
 from google.appengine import runtime
 
 import tutor_hangouts_api as hapi
-from apiclient import discovery
 from utils import JSONEncoder, autolog
 from lib.base import BaseHandler
 from models.models import *
@@ -97,8 +96,9 @@ def assign_available_tutors(subjects_list):
             while tutorQueue and i < size:
                 i += 1
                 current_tutor = tutorQueue.pop()
-                tutor_list = TutorSubjects.query(ndb.AND(TutorSubjects.gid == current_tutor.gid,
-                                                         TutorSubjects.tutor_id == current_tutor.tutor_id)).fetch(1)
+                tutor_list = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
+                    ndb.AND(TutorSubjects.gid == current_tutor.gid,
+                            TutorSubjects.tutor_id == current_tutor.tutor_id)).fetch(1)
                 if len(tutor_list) > 0:
                     tutor = tutor_list[0]
 
@@ -137,7 +137,6 @@ def update_subjects():
                 autolog('Over Quota Error, bypassing for now: ' + str(e))
     else:
         autolog('There are avail_tutors.')
-        # assign_available_tutors(avail_tutors, subjects_list)
         assign_available_tutors(subjects_list)
 
 
@@ -207,8 +206,9 @@ class PublishHandler(BaseHandler):
         """ Insert/update the subjects for which the tutor is available """
 
         try:
-            tutor = TutorSubjects.query(ndb.AND(TutorSubjects.tutor_id == self.request.get('pid'),
-                                                TutorSubjects.gid == self.request.get('gid'))).fetch(1)
+            tutor = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
+                ndb.AND(TutorSubjects.tutor_id == self.request.get('pid'),
+                        TutorSubjects.gid == self.request.get('gid'))).fetch(1)
 
             count = int(self.request.get('count')) if self.request.get('count') else 0
             max_participants = int(self.request.get('maxParticipants')) if self.request.get('maxParticipants') else 1
@@ -268,7 +268,6 @@ class SubscribeHandler(BaseHandler):
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         ths_list = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).fetch()
         return self.response.out.write(dump_json(ths_list))
-        # return TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).fetch()
 
     def post(self):
         """ Subscribe client for H-O session"""
@@ -281,45 +280,50 @@ class SubscribeHandler(BaseHandler):
         if self.request.get('exit'):
             """ The session ended, update the session end"""
             autolog("Updating session end")
-            session = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(ndb.AND(
+            session_list = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(ndb.AND(
                 TutorHangoutSessions.tutor_id == tutor_id,
                 TutorHangoutSessions.participant_id == student_id,
                 TutorHangoutSessions.gid == gid,
-                not TutorHangoutSessions.duration)).fetch(1)
-            if not session:
+                TutorHangoutSessions.duration <= 0.0)).fetch(1)
+
+            if not session_list:
                 autolog(
-                    'TutorHangoutSession was not found: tutor_id {%s}, gid{%s}' % (tutor_id, gid))
+                    'TutorHangoutSession was not found: tutor_id {%s}, gid{%s}, student_id{%s}' % (
+                    tutor_id, gid, student_id))
+                self.response.set_status(204, "No session found for criteria.")
             else:
+                session = session_list[0]
                 now = datetime.datetime.now()
-            delta = now - session[0].start
-            session[0].end = now
-            session[0].duration = delta.total_seconds() / 60  # minutes
-            session[0].put()
+                delta = now - session.start
+                session.end = now
+                session.duration = delta.total_seconds() / 60  # convert to minutes
+                session_key = session.put()
+                self.response.out.write(session_key.urlsafe())
 
-            tutor = TutorSubjects.query(TutorSubjects.tutor_id == tutor_id).fetch(1)
-
-            # Add tutor back to queue
-            tutorQueue.appendleft(tutor)
+                tutor = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
+                    TutorSubjects.tutor_id == tutor_id).fetch(1)
+                # Add tutor back to queue
+                if len(tutor) > 0:
+                    tutorQueue.appendleft(tutor[0])
 
         else:  # Create new TutorHangoutSession
             autolog("Creating new session")
             # Get subject from TutorSubjects, cause the client does not have it
-            tutor = TutorSubjects.query(TutorSubjects.gid == gid).fetch()
+            tutor = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
+                TutorSubjects.gid == gid).fetch()
             if len(tutor) > 0:
-                ho_session = TutorHangoutSessions(parent=hapi.TUTOR_SESSIONS_PARENT_KEY,
-                                                  subject=tutor[0].subjects[0],
-                                                  tutor_id=self.request.get('tutorId'),
-                                                  tutor_name=self.request.get('tutorName'),
-                                                  gid=gid,
-                                                  duration=None,
-                                                  participant_id=self.request.get('studentId'),
-                                                  participant_name=self.request.get('studentName')
+                session = TutorHangoutSessions(parent=hapi.TUTOR_SESSIONS_PARENT_KEY,
+                                               subject=tutor[0].subjects[0],
+                                               tutor_id=self.request.get('tutorId'),
+                                               tutor_name=self.request.get('tutorName'),
+                                               gid=gid,
+                                               duration=None,
+                                               participant_id=self.request.get('studentId'),
+                                               participant_name=self.request.get('studentName')
                 )
-                ho_key = ho_session.put()
-
+                session_key = session.put()
                 remove_tutor_from_queue(tutor[0].tutor_id)
-
-                self.response.out.write(ho_key.urlsafe())
+                self.response.out.write(session_key.urlsafe())
             else:
                 autolog('No TutorSubjects; can not create a Hangout Session row.')
 
@@ -331,17 +335,13 @@ class SubjectsHandler(BaseHandler):
         remove_stale_sessions()
         update_subjects()
 
-        # Build a service object for interacting with the API.
-        discovery_url = '%s/discovery/v1/apis/%s/%s/rest' % (hapi.API_ROOT, hapi.API_NAME, hapi.VERSION)
-        service = discovery.build(hapi.API_NAME, hapi.VERSION, discoveryServiceUrl=discovery_url)
-
         try:
-            subjects = service.subjects().list(order='subject').execute()
+            subjects = HangoutSubjects.query(ancestor=hapi.SUBJECTS_PARENT_KEY).order(HangoutSubjects.subject).fetch()
+
             if subjects:
-                return self.response.out.write(JSONEncoder().encode(subjects.get('items', [])))
+                return self.response.out.write(JSONEncoder().encode(subjects))
             else:
-                self.response.set_status(204)
-                self.response.set_status_message('No subjects found')
+                self.response.set_status(204, 'No subjects found')
                 autolog("no subjects found")
                 return None
         except runtime.DeadlineExceededError, e:
@@ -384,7 +384,8 @@ class SurveyHandler(BaseHandler):
             self.response.set_status(500, 'Missing student id or gid values')
             return False
 
-        survey = TutorSurveys.query(ndb.AND(TutorSurveys.student_id == student_id, TutorSurveys.gid == gid)).fetch()
+        survey_list = TutorSurveys.query(ancestor=hapi.TUTOR_SURVEYS_PARENT_KEY).filter(
+            ndb.AND(TutorSurveys.student_id == student_id, TutorSurveys.gid == gid)).fetch()
 
         avail_subjects = []
         if len(self.request.get('subject')) > 0:
@@ -395,16 +396,17 @@ class SurveyHandler(BaseHandler):
 
         inp_subject = avail_subjects[0] if len(avail_subjects) > 0 else None
         try:
-            if survey:
-                survey[0].knowledge = float(self.request.get('knowledge'))
-                survey[0].communications = float(self.request.get('communications'))
-                survey[0].overall = float(self.request.get('overall'))
-                survey[0].comments = self.request.get('comments')
-                survey[0].student_id = student_id
-                survey[0].subject = inp_subject
-                survey[0].student_name = self.request.get('student_name')
-                survey[0].tutor_name = self.request.get('tutor_name')
-                survey_key = survey[0].put()
+            if survey_list:
+                survey = survey_list[0]
+                survey.knowledge = float(self.request.get('knowledge'))
+                survey.communications = float(self.request.get('communications'))
+                survey.overall = float(self.request.get('overall'))
+                survey.comments = self.request.get('comments')
+                survey.student_id = student_id
+                survey.subject = inp_subject
+                survey.student_name = self.request.get('student_name')
+                survey.tutor_name = self.request.get('tutor_name')
+                survey_key = survey.put()
                 self.response.out.write(survey_key.urlsafe())
             else:
                 survey = TutorSurveys(parent=hapi.TUTOR_SURVEYS_PARENT_KEY,
@@ -430,7 +432,7 @@ class SurveyHandler(BaseHandler):
             autolog('ValueError on Tutor Survey Insert.')
         except Exception, e:
             self.response.set_status(500, 'Exception on Tutor Survey Insert.' + str(e))
-            autolog('Exception on Tutor Survey Insert.')
+            autolog('Exception on Tutor Survey Insert: %s' % str(e))
             self.response.out.write('Exception on Tutor Survey Insert:' + str(e))
 
 
@@ -442,12 +444,16 @@ class SurveyHandler(BaseHandler):
 
         # Client could have multiple sessions for the same HangoutId.  Assign survey to the latest open (no end date)
         # session.
-        session = TutorHangoutSessions.query(
+        # try:
+        session = TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(
             ndb.AND(TutorHangoutSessions.participant_id == student_id, TutorHangoutSessions.gid == gid,
-                    TutorHangoutSessions.end == None)).fetch()
+                    TutorHangoutSessions.duration <= 0.0)).fetch()
+
         if session:
-            session[0].survey_key = survey_key
-            session[0].put()
+            autolog('updating session.survey_key')
+            session.survey_key = survey_key
+            session.put()
             return True
         else:
+            autolog('session not found')
             return False

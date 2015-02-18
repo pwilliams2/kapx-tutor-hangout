@@ -21,6 +21,7 @@ var MAX_COUNT = 2;
 var hangoutURL = '';
 var gid = '';
 var pid = '';
+var studentId='';
 var tutorName = '';
 var localParticipant;
 var count = 0;
@@ -43,9 +44,9 @@ function httpRequest(method, server, path, params) {
             var jsonResponse = JSON.parse(http.responseText);
         }
         else {
-            console.log("readyState: " + this.readyState)
-            console.log("status: " + this.status)
-            //console.log("statusText: " + http.responseText)
+            console.log("readyState: " + this.readyState);
+            console.log("status: " + this.status);
+            console.log("statusText: " + http.responseText);
         }
     }
     if (method && method.toUpperCase() == "GET") {
@@ -60,6 +61,27 @@ function httpRequest(method, server, path, params) {
     }
 }
 
+function postSurvey() {
+    console.log('postSurvey');
+    studentId = localParticipant.person.id;
+    payload = 'student_id=' + studentId
+    + '&subjects=' + subjects_
+    + '&tutor_name=' + tutorName
+    + '&student_name=' + localParticipant.person.displayName
+    + '&gid=' + gid
+    + '&knowledge=' + $('#spinknow').val()
+    + '&communications=' + $('#spincomm').val()
+    + '&overall=' + $('#spinall').val()
+    + '&comments=' + $('#comments').val();
+
+    try {
+        $('#clientMessage').html("");
+        httpRequest('POST', SERVER_PATH, 'surveys/data', payload);
+        $('#clientMessage').html("Submitted");
+    } catch (e) {
+        console.log(e);
+    }
+}
 // Publish tutor availability for subject(s)
 function publish(subjects) {
     console.log('Selected subject' + subjects);
@@ -114,12 +136,13 @@ function updateParticipantsUi(participants) {
         console.log('subscribing...');
         $('.clientParticipant').html(participants_[0].person.displayName);
 
+        studentId = participants_[0].person.id;
         httpRequest('POST', SERVER_PATH, 'subscribe',
             'tutorId=' + pid
             + '&subjects=' + subjects_
             + '&tutorName=' + tutorName
             + '&gid=' + gid
-            + '&studentId=' + participants_[0].person.id
+            + '&studentId=' + studentId
             + '&studentName=' + participants_[0].person.displayName);
     }
     else if (participants.length < count && count > 1) {
@@ -127,7 +150,7 @@ function updateParticipantsUi(participants) {
         $('.clientParticipant').html("");
 
         httpRequest('POST', SERVER_PATH, 'unsubscribe',
-            'studentId=' + participants_[participants_.length - 1].person.id
+            'studentId=' + studentId
             + '&tutorId=' + pid
             + '&gid=' + gid
             + '&exit=True');
@@ -136,26 +159,6 @@ function updateParticipantsUi(participants) {
 }
 
 
-function postSurvey() {
-    console.log('postSurvey');
-    payload = 'student_id=' + localParticipant.person.id
-    + '&subjects=' + subjects_
-    + '&tutor_name=' + tutorName
-    + '&student_name=' + localParticipant.person.displayName
-    + '&gid=' + gid
-    + '&knowledge=' + $('#spinknow').val()
-    + '&communications=' + $('#spincomm').val()
-    + '&overall=' + $('#spinall').val()
-    + '&comments=' + $('#comments').val();
-
-    try {
-        $('#clientMessage').html("");
-        httpRequest('POST', SERVER_PATH, 'surveys/data', payload);
-        $('#clientMessage').html("Submitted");
-    } catch (e) {
-        console.log(e);
-    }
-}
 // A function to be run at app initialization time which registers our callbacks
 function init() {
     console.log('Init app.');
