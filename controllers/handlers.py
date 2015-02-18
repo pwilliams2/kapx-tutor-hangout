@@ -289,7 +289,7 @@ class SubscribeHandler(BaseHandler):
             if not session_list:
                 autolog(
                     'TutorHangoutSession was not found: tutor_id {%s}, gid{%s}, student_id{%s}' % (
-                    tutor_id, gid, student_id))
+                        tutor_id, gid, student_id))
                 self.response.set_status(204, "No session found for criteria.")
             else:
                 session = session_list[0]
@@ -373,6 +373,7 @@ class SurveyHandler(BaseHandler):
 
         return self.response.out.write(dump_json(surveys))
 
+
     def post(self):
         """ Post surveys  """
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
@@ -384,9 +385,6 @@ class SurveyHandler(BaseHandler):
             self.response.set_status(500, 'Missing student id or gid values')
             return False
 
-        survey_list = TutorSurveys.query(ancestor=hapi.TUTOR_SURVEYS_PARENT_KEY).filter(
-            ndb.AND(TutorSurveys.student_id == student_id, TutorSurveys.gid == gid)).fetch()
-
         avail_subjects = []
         if len(self.request.get('subject')) > 0:
             subjects_list = json.loads(self.request.get('subject'))
@@ -394,7 +392,18 @@ class SurveyHandler(BaseHandler):
                 subject = str(tutor_subject['subject'])
                 avail_subjects.append(subject)
 
-        inp_subject = avail_subjects[0] if len(avail_subjects) > 0 else None
+        if len(avail_subjects) > 0:
+            inp_subject = avail_subjects[0]
+        else:
+            tutor_subjects = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
+                TutorSubjects.gid == gid).fetch()
+            autolog(tutor_subjects)
+            if len(tutor_subjects) > 0:
+                inp_subject = tutor_subjects[0].subjects[0]
+
+        # Retrieve current surveys to determine if it's an update or insert
+        survey_list = TutorSurveys.query(ancestor=hapi.TUTOR_SURVEYS_PARENT_KEY).filter(
+            ndb.AND(TutorSurveys.student_id == student_id, TutorSurveys.gid == gid)).fetch()
         try:
             if survey_list:
                 survey = survey_list[0]
