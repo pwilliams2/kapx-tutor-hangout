@@ -451,8 +451,8 @@ class SurveyHandler(BaseHandler):
 
         if session:
             autolog('updating session.survey_key')
-            session.survey_key = survey_key
-            session.put()
+            session[0].survey_key = survey_key
+            session[0].put()
             return True
         else:
             autolog('session not found')
