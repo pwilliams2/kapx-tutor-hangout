@@ -9,7 +9,7 @@ from google.appengine import runtime
 import tutor_hangouts_api as hapi
 from utils import JSONEncoder, autolog
 from lib.base import BaseHandler
-from models.models import *
+from models.models import TutorSubjects, TutorHangoutSessions, HangoutSubjects, TutorSurveys
 
 
 tutorQueue = deque()  # FIFO q to serve subscribers
@@ -21,7 +21,7 @@ def remove_stale_sessions():
     now = datetime.datetime.now()
     del_list = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).fetch()
 
-    if del_list and len(del_list) > 0:
+    if del_list and del_list:
         autolog('del_list')
         keys = []
         for item in del_list:
@@ -29,7 +29,7 @@ def remove_stale_sessions():
             if delta.total_seconds() > 60:
                 keys.append(item.key)
 
-        if len(keys) > 0:
+        if keys:
             autolog('deleting tutor keys ' % keys)
             ndb.delete_multi(keys)
 
@@ -44,7 +44,7 @@ def assign_available_tutors(avail_tutors, subjects_list):
     done = []  # Subjects that are already updated.
     for tutor in avail_tutors:
 
-        if len(tutor.subjects) == 0:  # No available tutors, so set all subjects to unavailable
+        if tutor.subjects:  # No available tutors, so set all subjects to unavailable
             subjects = []
             for subject in subjects_list:
                 if subject.subject in done:
@@ -99,7 +99,7 @@ def assign_available_tutors(subjects_list):
                 tutor_list = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
                     ndb.AND(TutorSubjects.gid == current_tutor.gid,
                             TutorSubjects.tutor_id == current_tutor.tutor_id)).fetch(1)
-                if len(tutor_list) > 0:
+                if tutor_list:
                     tutor = tutor_list[0]
 
                     if subject.subject in tutor.subjects and tutor.participants_count < tutor.max_participants:
@@ -141,7 +141,7 @@ def update_subjects():
 
 
 def dump_json(a_list):
-    if len(a_list) > 0:
+    if a_list:
         data = {
             "data": [item for item in a_list]
         }
@@ -182,11 +182,10 @@ class HeartbeatHandler(BaseHandler):
         if not ts_list:  # hangout is no longer available
             pass
         else:  # Found an existing tutor tutor_id, then update the count
-            entity_key = ts_list[0].key.urlsafe()
             count = self.request.get("count") if self.request.get("count") else 1
             ts_list[0].gid = self.request.get('gid')
             ts_list[0].participants_count = int(count)
-            ts_key = ts_list[0].put()
+            ts_list[0].put()
 
         remove_stale_sessions()  # cleanup closed sessions
         update_subjects()  # Update available subjects
@@ -215,13 +214,13 @@ class PublishHandler(BaseHandler):
             inp_subjects = self.request.get('subjects') if self.request.get('subjects') else ''
 
             avail_subjects = []
-            if len(inp_subjects) > 0:
+            if inp_subjects:
                 subjects_list = json.loads(inp_subjects)
                 for tutor_subject in subjects_list:
                     subject = str(tutor_subject['subject'])
                     avail_subjects.append(subject)
 
-            if len(tutor) > 0:
+            if tutor:
                 tutor = tutor[0]
                 autolog("Updating tutor subject")
                 tutor.gid = self.request.get('gid')
@@ -303,7 +302,7 @@ class SubscribeHandler(BaseHandler):
                 tutor = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
                     TutorSubjects.tutor_id == tutor_id).fetch(1)
                 # Add tutor back to queue
-                if len(tutor) > 0:
+                if tutor:
                     tutorQueue.appendleft(tutor[0])
 
         else:  # Create new TutorHangoutSession
@@ -311,7 +310,7 @@ class SubscribeHandler(BaseHandler):
             # Get subject from TutorSubjects, cause the client does not have it
             tutor = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
                 TutorSubjects.gid == gid).fetch()
-            if len(tutor) > 0:
+            if tutor:
                 session = TutorHangoutSessions(parent=hapi.TUTOR_SESSIONS_PARENT_KEY,
                                                subject=tutor[0].subjects[0],
                                                tutor_id=self.request.get('tutorId'),
@@ -386,19 +385,19 @@ class SurveyHandler(BaseHandler):
             return False
 
         avail_subjects = []
-        if len(self.request.get('subject')) > 0:
+        if self.request.get('subject'):
             subjects_list = json.loads(self.request.get('subject'))
             for tutor_subject in subjects_list:
                 subject = str(tutor_subject['subject'])
                 avail_subjects.append(subject)
 
-        if len(avail_subjects) > 0:
+        if avail_subjects:
             inp_subject = avail_subjects[0]
         else:
             tutor_subjects = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
                 TutorSubjects.gid == gid).fetch()
             autolog(tutor_subjects)
-            if len(tutor_subjects) > 0:
+            if tutor_subjects:
                 inp_subject = tutor_subjects[0].subjects[0]
 
         # Retrieve current surveys to determine if it's an update or insert

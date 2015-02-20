@@ -21,6 +21,8 @@
     <link href="css/stylechart.css" rel="stylesheet">
 
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.6.0/bootstrap-table.min.css">
 
     <script src="js/ie-emulation-modes-warning.js"></script>
 
@@ -68,103 +70,131 @@
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
             <h3 class="page-header">Tutor Report Card <i class="fa fa-pencil-square-o"></i></h3>
 
-            <div class="row">
 
-            </div>
             <!-- /.row -->
 
+            <div class="row">
+                <div class="col-md-9">
+                    <h4 class="sub-header">Tutor Survey Avg Ratings</h4>
 
-            <div class="col-md-8">
-                <h4 class="sub-header">Tutor Survey Avg Ratings</h4>
-                <div id="bar-survey" class="graph" style="height: 250px;"></div>
+                    <div id="bar-survey" class="graph" style="height: 250px;"></div>
+                </div>
+                <!-- Tutor list -->
+                <div class="col-md-3">
+                    <h4 class="sub-header">Select Tutor</h4>
+                    <table data-toggle="table" data-click-to-select="true">
+                        <thead>
+                        <tr>
+                            <th data-field="state" data-radio="true"></th>
+                            <th data-field="tutor_name" data-sortable="true">Tutor</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for tutor in tutors_query %}
+                        <tr>
+                            <td></td>
+                            <td>
+                                {{tutor.tutor_name}}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+
+                </div>
             </div>
-                    <!-- comments -->
-            <div class="col-md-3 col-offset-1">
-                <div class="chat-panel panel panel-default">
-                    <div class="panel-heading">
-                        <i class="fa fa-comments fa-fw"></i>
-                        Latest Surveys
-                        <div class="btn-group pull-right">
-                            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-                                <i class="fa fa-chevron-down"></i>
-                            </button>
-                            <ul class="dropdown-menu slidedown">
-                                <li>
-                                    <a href="#">
-                                        <i class="fa fa-refresh fa-fw"></i> Refresh
-                                    </a>
+            <div class="row">
+
+                <div class="col-md-9">
+                    <h4 class="sub-header"># Sessions</h4>
+
+                    <div id="line-sessions" class="graph" style="height: 250px;"></div>
+                </div>
+
+                <!-- comments -->
+                <div class="col-md-3">
+                    <div class="chat-panel panel panel-default">
+                        <div class="panel-heading">
+                            <i class="fa fa-comments fa-fw"></i>
+                            Latest Surveys
+                            <div class="btn-group pull-right">
+                                <button type="button" class="btn btn-default btn-xs dropdown-toggle"
+                                        data-toggle="dropdown">
+                                    <i class="fa fa-chevron-down"></i>
+                                </button>
+                                <ul class="dropdown-menu slidedown">
+                                    <li>
+                                        <a href="#">
+                                            <i class="fa fa-refresh fa-fw"></i> Refresh
+                                        </a>
+                                    </li>
+
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <ul class="chat">
+                                <li class="left clearfix">
+
+                                    <div class="clearfix">
+                                        <div class="header">
+
+                                            <small class="text-muted">
+                                                <i class="fa fa-clock-o fa-fw"></i>12 mins ago
+                                            </small>
+                                        </div>
+                                        <p><strong class="primary-font">Charlie Brown</strong></p>
+
+                                        <p>
+                                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur bibendum
+                                            ornare
+                                            dolor, quis ullamcorper ligula sodales.
+                                        </p>
+                                    </div>
                                 </li>
+                                <li class="left clearfix">
+
+                                    <div class="clearfix">
+                                        <div class="header">
+
+                                            <small class="text-muted">
+                                                <i class="fa fa-clock-o fa-fw"></i>18 mins ago
+                                            </small>
+                                        </div>
+                                        <p><strong class="primary-font">Sally Brown</strong></p>
+
+                                        <p>
+                                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur bibendum
+                                            ornare
+                                            dolor, quis ullamcorper ligula sodales.
+                                        </p>
+                                    </div>
+                                </li>
+                                <li class="left clearfix">
+                                    <div class="clearfix">
+                                        <div class="header">
+
+                                            <small class="text-muted">
+                                                <i class="fa fa-clock-o fa-fw"></i>18 mins ago
+                                            </small>
+                                        </div>
+                                        <p><strong class="primary-font">Linus Torvald</strong></p>
+
+                                        <p>
+                                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur bibendum
+                                            ornare
+                                            dolor, quis ullamcorper ligula sodales.
+                                        </p>
+                                    </div>
+                                </li>
+
 
                             </ul>
                         </div>
                     </div>
-                    <!-- /.panel-heading -->
-                    <div class="panel-body">
-                        <ul class="chat">
-                            <li class="left clearfix">
-
-                                <div class="clearfix">
-                                    <div class="header">
-
-                                        <small class="text-muted">
-                                            <i class="fa fa-clock-o fa-fw"></i>12 mins ago
-                                        </small>
-                                    </div>
-                                    <p><strong class="primary-font">Charlie Brown</strong></p>
-
-                                    <p>
-                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur bibendum
-                                        ornare
-                                        dolor, quis ullamcorper ligula sodales.
-                                    </p>
-                                </div>
-                            </li>
-                            <li class="left clearfix">
-
-                                <div class="clearfix">
-                                    <div class="header">
-
-                                        <small class="text-muted">
-                                            <i class="fa fa-clock-o fa-fw"></i>18 mins ago
-                                        </small>
-                                    </div>
-                                    <p><strong class="primary-font">Sally Brown</strong></p>
-
-                                    <p>
-                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur bibendum
-                                        ornare
-                                        dolor, quis ullamcorper ligula sodales.
-                                    </p>
-                                </div>
-                            </li>
-                            <li class="left clearfix">
-                                <div class="clearfix">
-                                    <div class="header">
-
-                                        <small class="text-muted">
-                                            <i class="fa fa-clock-o fa-fw"></i>18 mins ago
-                                        </small>
-                                    </div>
-                                    <p><strong class="primary-font">Linus Torvald</strong></p>
-
-                                    <p>
-                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur bibendum
-                                        ornare
-                                        dolor, quis ullamcorper ligula sodales.
-                                    </p>
-                                </div>
-                            </li>
-
-
-                        </ul>
-                    </div>
                 </div>
             </div>
-             <div class="col-md-8">
-                 <h4 class="sub-header"># Sessions</h4>
-                <div id="line-sessions" class="graph" style="height: 250px;"></div>
-            </div>
-
         </div>
     </div>
 </div>
@@ -175,6 +205,9 @@
 <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.6.0/bootstrap-table.min.js"></script>
 
 <script src="js/report_card.js"></script>
 <script src="js/docs.min.js"></script>

@@ -33,7 +33,6 @@ def handle_500(request, response, exception):
     response.set_status(500)
 
 
-
 app = webapp2.WSGIApplication(debug=True)
 
 routes.add_routes(app)

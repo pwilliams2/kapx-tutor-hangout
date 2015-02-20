@@ -26,7 +26,11 @@ class OverviewPage(BaseHandler):
 
 class ReportCardPage(BaseHandler):
     def get(self):
-        self.render_template('templates/report_card.html')
+        ths_list = TutorHangoutSessions.query(
+            projection=[TutorHangoutSessions.tutor_name, TutorHangoutSessions.tutor_id],
+            distinct=True).fetch()
+        template_data = {'tutors_query': ths_list}
+        self.render_template('templates/report_card.html', **template_data)
 
 
 class SessionsPage(BaseHandler):

@@ -16,11 +16,15 @@ indexes:
   - name: subject
 
 - kind: TutorHangoutSessions
+  properties:
+  - name: tutor_id
+  - name: tutor_name
+
+- kind: TutorHangoutSessions
   ancestor: yes
   properties:
   - name: gid
   - name: participant_id
-  - name: tutor_id
   - name: duration
 
 - kind: TutorHangoutSessions
@@ -28,6 +32,7 @@ indexes:
   properties:
   - name: gid
   - name: participant_id
+  - name: tutor_id
   - name: duration
 
 - kind: TutorHangoutSessions
