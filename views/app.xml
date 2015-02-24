@@ -24,10 +24,9 @@
 <!DOCTYPE html>
 <!-- The hangout API JavaScript. Always include this first -->
 <head>
-    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/bootstrap.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/bootstrap-table.min.css">
-    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/bootstrap-spinedit.css" />
+    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/main.css"/>
 
     <script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>
 <head>
@@ -37,6 +36,7 @@
         <div>
             <p><b>Instructor: </b><span class="instructor"></span></p>
             <p><b>Student: </b><span class="clientParticipant"></span></p>
+            <p><b>Subject: </b><span id="subject"></span></p>
         </div>
     </div>
     <div class="row">
@@ -61,45 +61,18 @@
         </div>
     </div>
 </div>
-<div class="container" id="student-view" style="width: 250px">
+<div class="container" id="student-view" style="width: 275px">
     <div class="row well well-sm" style="margin-left: 5px">
         <div>
             <p><b>Instructor: </b><span class="instructor"></span></p>
         </div>
     </div>
     <div class="row" style="margin-left: 5px;margin-top: 250px;">
-        <div id="tutor-rating">
-            <p class="lead" style="margin-top: 5px">
-                Please rate your tutor:
-            </p>
-            <table style="width: 250px">
-                <tr>
-                    <td>Knowledgable</td>
-                    <td><input type="text" id="spinknow" class="aSpinEdit spinedit"/>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Communications</td>
-                    <td>
-                        <input type="text" id="spincomm" class="aSpinEdit spinedit noSelect"/>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Overall</td>
-                    <td>
-                        <input type="text" id="spinall" class="aSpinEdit spinedit noSelect"/>
-                    </td>
-                </tr>
-            </table>
-            <p style="margin-top: 5px;">
-                <textarea row="3" cols="40" id="comments" placeholder="Comments"></textarea>
-            </p>
-            <p style="margin-top:5px">
-                <input id="btn-survey" class="btn btn-primary" type="button" value="Submit">
-            </p>
-            <p id="clientMessage"></p>
-        </div>
-    </div>
+
+        <div id="feedback-tab" class="feedback-tab">
+		<span><a href="javascript:;" class="feedback-icon" id="feedback">Please give us your feedback!</a></span>
+	</div>
+
 </div>
         <!-- Script below this line -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
@@ -109,7 +82,7 @@
      relative path.
      Tip: You can load it from a local web server such as
      http://localhost/app.js for faster single user development -->
-    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.17"></script>
+    <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.18"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
 </body>
 ]]></Content>

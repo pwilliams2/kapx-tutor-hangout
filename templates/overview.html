@@ -16,7 +16,7 @@
     <!-- Custom CSS -->
     <link href="css/sb-admin-2.css" rel="stylesheet">
 
-     <!-- Custom styles for this template -->
+    <!-- Custom styles for this template -->
     <link href="css/dashboard.css" rel="stylesheet">
 
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
@@ -63,9 +63,13 @@
 
         </div>
 
-        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-            <h3 class="page-header">Tutor Hangouts Dashboard <i class="fa fa-dashboard"></i></h3>
-
+        <div id="page-wrapper" style="min-height: 247px;">
+            <div class="row">
+                <div class="col-md-12 main">
+                    <h3 class="page-header">Tutor Hangouts Dashboard <i class="fa fa-dashboard"></i></h3>
+                </div>
+            </div>
+            <!-- online counter -->
             <div class="row">
                 <div class="col-lg-2 col-md-4">
                     <div class="panel panel-primary">
@@ -180,8 +184,21 @@
             </div>
             <!-- /.row -->
 
+            <div class="row">
+                <div class="col-md-12">
+                    <h3 class="sub-header">Online Snapshot <i class="fa fa-camera-retro"></i></h3>
 
-            <h3 class="sub-header">Online Snapshot <i class="fa fa-camera-retro"></i></h3>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="col-md-3 offset1">
+                    <select class="form-control">
+                        <option value="1">Last 24 Hours</option>
+                        <option value="7">Last 7 Days</option>
+                        <option value="30">Last 30 Days</option>
+                    </select>
+                </div>
+            </div>
+
             <!-- Tutor summary table -->
             <div class="col-md-7">
                 <div class="table-responsive">
@@ -292,7 +309,7 @@
                                 </div>
                             </li>
                             {% endfor %}
-                            
+
                         </ul>
                     </div>
                 </div>
@@ -305,7 +322,7 @@
 <!-- Placed at the end of the document so the pages load faster -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
-<script src="js/docs.min.js"></script>
+
 <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
 <script src="js/ie10-viewport-bug-workaround.js"></script>
 </body>

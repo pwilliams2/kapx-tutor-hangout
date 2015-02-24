@@ -24,6 +24,7 @@ _routes = [
     RedirectRoute('/publishsubjects', handlers.PublishHandler, name='Publish', strict_slash=True),
 
     # Client Subscribe
+    RedirectRoute('/hangouts', handlers.HangoutRequestHandler, name='HangoutRequest', strict_slash=True),
     RedirectRoute('/sessions/data', handlers.SessionHandler, name='SessionData', strict_slash=True),
     RedirectRoute('/subscribe', handlers.SubscribeHandler, name='Subscribe', strict_slash=True),
     RedirectRoute('/unsubscribe', handlers.SubscribeHandler, name='Subscribe', strict_slash=True),

@@ -5,6 +5,7 @@ from collections import deque
 from google.appengine.api.datastore_errors import BadValueError
 from google.appengine.runtime.apiproxy_errors import OverQuotaError
 from google.appengine import runtime
+from google.appengine.ext import ndb
 
 import tutor_hangouts_api as hapi
 from utils import JSONEncoder, autolog
@@ -19,7 +20,7 @@ def remove_stale_sessions():
     """ When a tutor closes their H-O, we need to remove them from the available subjects """
     autolog("remove_stale_sessions")
     now = datetime.datetime.now()
-    del_list = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).fetch()
+    del_list = get_tutor_subjects()
 
     if del_list and del_list:
         autolog('del_list')
@@ -32,50 +33,6 @@ def remove_stale_sessions():
         if keys:
             autolog('deleting tutor keys ' % keys)
             ndb.delete_multi(keys)
-
-
-def assign_available_tutors(avail_tutors, subjects_list):
-    """ Assign the tutors in the avail_tutors_list to the subjects in the subjects_list
-    :param avail_tutors_list: available tutors and their subjects
-    :param subjects_list: the tutored subjects
-    :return:
-    """
-
-    done = []  # Subjects that are already updated.
-    for tutor in avail_tutors:
-
-        if tutor.subjects:  # No available tutors, so set all subjects to unavailable
-            subjects = []
-            for subject in subjects_list:
-                if subject.subject in done:
-                    continue
-                subject.is_available = False
-                subject.gid = ''
-                subjects.append(subject)
-            ndb.put_multi(subjects)
-            break
-
-        for avail_subject in tutor.subjects:
-            for subject in subjects_list:
-                if subject.subject in done:
-                    continue
-
-                if avail_subject == subject.subject and tutor.participants_count < tutor.max_participants:
-                    subject.gid = tutor.gid
-                    subject.is_available = True
-
-                    if avail_subject not in done:
-                        done.append(avail_subject)
-                else:
-                    subject.is_available = False
-                    subject.gid = ''
-
-                try:
-                    subject.put()
-                except OverQuotaError, e:
-                    autolog('Over Quota Error, bypassing for now: ' + str(e))
-                    return False
-    return True
 
 
 def assign_available_tutors(subjects_list):
@@ -96,9 +53,8 @@ def assign_available_tutors(subjects_list):
             while tutorQueue and i < size:
                 i += 1
                 current_tutor = tutorQueue.pop()
-                tutor_list = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
-                    ndb.AND(TutorSubjects.gid == current_tutor.gid,
-                            TutorSubjects.tutor_id == current_tutor.tutor_id)).fetch(1)
+
+                tutor_list = get_tutor_subjects(current_tutor.tutor_id, current_tutor.gid)
                 if tutor_list:
                     tutor = tutor_list[0]
 
@@ -124,14 +80,14 @@ def update_subjects():
     subjects_list = HangoutSubjects.query(ancestor=hapi.SUBJECTS_PARENT_KEY).fetch()
 
     # Retrieve Available Tutors and their subjects
-    avail_tutors = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).fetch()
+    avail_tutors = get_tutor_subjects()
 
     if not avail_tutors:  # There are no tutors available
         autolog('No available tutors.')
         for subject in subjects_list:  # Set all subjects to unavailable
-            subject.is_available = False
-            subject.gid = None
             try:
+                subject.is_available = False
+                subject.gid = None
                 subject.put()
             except OverQuotaError, e:
                 autolog('Over Quota Error, bypassing for now: ' + str(e))
@@ -151,8 +107,28 @@ def dump_json(a_list):
         return [{}]
 
 
-def remove_tutor_from_queue(tutor_id):
+def get_tutor_subjects(tutor_id=None, gid=None):
+    """ Return the tutor
+    :param tutor_id:
+    :param gid:
+    :return:
     """
+
+    if tutor_id and gid:
+        return TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
+            ndb.AND(TutorSubjects.tutor_id == tutor_id, TutorSubjects.gid == gid)).fetch(1)
+    elif tutor_id:
+        return TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
+            TutorSubjects.tutor_id == tutor_id).fetch(1)
+    elif gid:
+        return TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
+            TutorSubjects.gid == gid).fetch(1)
+    else:
+        return TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).fetch()
+
+
+def remove_tutor_from_queue(tutor_id):
+    """  When a tutor starts a session with a client (student), remove them from avail queue
     :param tutor_id:
     :return:
     """
@@ -169,6 +145,19 @@ def remove_tutor_from_queue(tutor_id):
     return False
 
 
+class HangoutRequestHandler(BaseHandler):
+    def get(self):
+        self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+
+        url = 'https://talkgadget.google.com/hangouts/_/'  # gid is appended below at run-time
+        gid = self.request.get('gid')
+        subject = self.request.get('subject')
+        autolog("HangoutRequestHandler url %s, %s, %s" % (url, gid, subject))
+        uri = url + gid + '?gd=' + subject
+
+        return self.redirect(str(uri))
+
+
 class HeartbeatHandler(BaseHandler):
     """ Heartbeat of the tutor's hangout  """
 
@@ -177,15 +166,15 @@ class HeartbeatHandler(BaseHandler):
         self.response.headers['Content-Type'] = 'text/plain'
 
         # Search for the specified tutor id == pid
-        ts_list = TutorSubjects.query(TutorSubjects.tutor_id == self.request.get('pid')).fetch()
+        ts_list = get_tutor_subjects(self.request.get('pid'))
 
         if not ts_list:  # hangout is no longer available
             pass
         else:  # Found an existing tutor tutor_id, then update the count
             count = self.request.get("count") if self.request.get("count") else 1
-            ts_list[0].gid = self.request.get('gid')
-            ts_list[0].participants_count = int(count)
-            ts_list[0].put()
+        ts_list[0].gid = self.request.get('gid')
+        ts_list[0].participants_count = int(count)
+        ts_list[0].put()
 
         remove_stale_sessions()  # cleanup closed sessions
         update_subjects()  # Update available subjects
@@ -201,13 +190,12 @@ class PublishHandler(BaseHandler):
         self.publish_tutor()
         update_subjects()
 
+
     def publish_tutor(self):
         """ Insert/update the subjects for which the tutor is available """
 
         try:
-            tutor = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
-                ndb.AND(TutorSubjects.tutor_id == self.request.get('pid'),
-                        TutorSubjects.gid == self.request.get('gid'))).fetch(1)
+            tutor = get_tutor_subjects(self.request.get('pid'), self.request.get('gid'))
 
             count = int(self.request.get('count')) if self.request.get('count') else 0
             max_participants = int(self.request.get('maxParticipants')) if self.request.get('maxParticipants') else 1
@@ -308,8 +296,7 @@ class SubscribeHandler(BaseHandler):
         else:  # Create new TutorHangoutSession
             autolog("Creating new session")
             # Get subject from TutorSubjects, cause the client does not have it
-            tutor = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
-                TutorSubjects.gid == gid).fetch()
+            tutor = get_tutor_subjects(None, gid)
             if tutor:
                 session = TutorHangoutSessions(parent=hapi.TUTOR_SESSIONS_PARENT_KEY,
                                                subject=tutor[0].subjects[0],
@@ -331,7 +318,7 @@ class SubjectsHandler(BaseHandler):
     def get(self):
         """ Returns the list of subjects with available tutors """
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
-        remove_stale_sessions()
+        # remove_stale_sessions()
         update_subjects()
 
         try:
@@ -394,8 +381,7 @@ class SurveyHandler(BaseHandler):
         if avail_subjects:
             inp_subject = avail_subjects[0]
         else:
-            tutor_subjects = TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
-                TutorSubjects.gid == gid).fetch()
+            tutor_subjects = get_tutor_subjects(None, gid)
             autolog(tutor_subjects)
             if tutor_subjects:
                 inp_subject = tutor_subjects[0].subjects[0]

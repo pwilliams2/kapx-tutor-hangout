@@ -5,9 +5,9 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-   <link rel="stylesheet" href="css/bootstrap.css">
-    <link rel="stylesheet" href="css/bootstrap-spinedit.css"/>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+   <!--<link rel="stylesheet" href="css/bootstrap.css">-->
+    <!--<link rel="stylesheet" href="css/bootstrap-spinedit.css"/>-->
     <link rel="stylesheet" href="css/bootstrap-table.min.css">
     <link rel="stylesheet" href="css/main.css"/>
     <!--<script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>-->
@@ -20,6 +20,7 @@
             <p><b>Instructor: </b><span class="instructor"></span></p>
 
             <p><b>Student: </b><span class="clientParticipant"></span></p>
+            <p><b>Subject: </b><span id="subject"></span></p>
         </div>
     </div>
     <div class="row">
@@ -53,42 +54,46 @@
 
         </div>
     </div>
-    <div class="row" style="margin-left: 5px;margin-top: 350px;">
-        <div id="tutor-rating">
-            <p class="lead" style="margin-top: 5px">
-                Please rate your tutor:
-            </p>
-            <table style="width: 250px">
-                <tr>
-                    <td>Knowledgable</td>
-                    <td><input type="text" id="spinknow" class="aSpinEdit spinedit"/>
+    <div class="row" style="margin-left: 5px;margin-top: 200px;">
 
-                    </td>
-                </tr>
-                <tr style="margin-top: 5px">
-                    <td>Communications</td>
-                    <td>
-                        <input type="text" id="spincomm" class="aSpinEdit spinedit noSelect"/>
+        <div id="feedback-tab" class="feedback-tab">
+		<span><a href="javascript:;" class="feedback-icon" id="feedback">Please give us your feedback!</a></span>
+	</div>
+        <!--<div id="tutor-rating">-->
+            <!--<p class="lead" style="margin-top: 5px">-->
+                <!--Please rate your tutor:-->
+            <!--</p>-->
+            <!--<table style="width: 250px">-->
+                <!--<tr>-->
+                    <!--<td>Knowledgable</td>-->
+                    <!--<td><input type="text" id="spinknow" class="aSpinEdit spinedit"/>-->
 
-                    </td>
-                </tr>
-                 <tr style="margin-top: 5px">
-                    <td>Overall</td>
-                    <td>
-                        <input type="text" id="spinall" class="aSpinEdit spinedit noSelect"/>
+                    <!--</td>-->
+                <!--</tr>-->
+                <!--<tr style="margin-top: 5px">-->
+                    <!--<td>Communications</td>-->
+                    <!--<td>-->
+                        <!--<input type="text" id="spincomm" class="aSpinEdit spinedit noSelect"/>-->
 
-                    </td>
-                </tr>
-            </table>
+                    <!--</td>-->
+                <!--</tr>-->
+                 <!--<tr style="margin-top: 5px">-->
+                    <!--<td>Overall</td>-->
+                    <!--<td>-->
+                        <!--<input type="text" id="spinall" class="aSpinEdit spinedit noSelect"/>-->
 
-            <p style="margin-top: 5px;">
-                <textarea row="3" cols="40" id="comments" placeholder="Comments"></textarea>
-            </p>
+                    <!--</td>-->
+                <!--</tr>-->
+            <!--</table>-->
 
-            <p style="margin-top:5px">
-                <input id="btn-survey" class="btn btn-primary" type="button" value="Submit">
-            </p>
-        </div>
+            <!--<p style="margin-top: 5px;">-->
+                <!--<textarea row="3" cols="40" id="comments" placeholder="Comments"></textarea>-->
+            <!--</p>-->
+
+            <!--<p style="margin-top:5px">-->
+                <!--<input id="btn-survey" class="btn btn-primary" type="button" value="Submit">-->
+            <!--</p>-->
+        <!--</div>-->
     </div>
 </div>
 

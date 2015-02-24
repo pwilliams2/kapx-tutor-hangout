@@ -17,7 +17,6 @@
  * the License.
  */
 var SERVER_PATH = '//kx-tutor-hangout-app.appspot.com/';
-var SERVER_PATH_API = '//kx-tutor-hangout-app.appspot.com/_ah/api/tutorhangouts/' //only works for GET
 var MAX_COUNT = 2;
 var hangoutURL = '';
 var gid = 'gxx5k3fvmhehr5y2jy3utw2lmma';
@@ -31,7 +30,7 @@ var subjects_ = '';
 
 // Publish tutor availability for subject(s)
 function publish(subjects) {
-    console.log('Selected subject' + subjects);
+
     subjects_ = subjects;
     var arr = hangoutURL.split('/');
     gid = arr[arr.length - 1];
@@ -184,6 +183,9 @@ $(function () {
 
     // $table is defined above
     $('#btn-subjects').click(function () {
+        var subjects =  $table.bootstrapTable('getSelections');
+        console.log(subjects[0].subject);
+        $('#subject').html(subjects[0].subject)
         publish(JSON.stringify($table.bootstrapTable('getSelections')));
     });
 

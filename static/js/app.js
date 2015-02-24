@@ -27,6 +27,7 @@ var localParticipant;
 var count = 0;
 var participants_ = null;
 var subjects_ = '';
+var jsonSubjects_ = null;
 
 
 // Post a heartbeat to inform host that this tutor H-O is still available
@@ -84,8 +85,8 @@ function postSurvey() {
 }
 // Publish tutor availability for subject(s)
 function publish(subjects) {
-    console.log('Selected subject' + subjects);
-    subjects_ = subjects;
+    jsonSubjects_ = subjects;
+    subjects_ = JSON.stringify(subjects);
     var arr = hangoutURL.split('/');
     gid = arr[arr.length - 1];
     pid = localParticipant.person.id;
@@ -134,7 +135,11 @@ function updateParticipantsUi(participants) {
         var appData = gadgets.views.getParams()['appData'];
         console.log('appData:' + appData);
         console.log('subscribing...');
+        console.log('subject: ' + jsonSubjects_[0].subject);
+        $('#subject').html(jsonSubjects_[0].subject)
+
         $('.clientParticipant').html(participants_[0].person.displayName);
+       // $('.subject').html(subjects_);
 
         studentId = participants_[0].person.id;
         httpRequest('POST', SERVER_PATH, 'subscribe',
@@ -179,7 +184,7 @@ function init() {
             var startData = gapi.hangout.getStartData();
             console.log('start_data: ' + startData);
 
-            if (startData && startData.length > 1) {
+            if (startData && startData.length > 1 && startData.toLowerCase() == 'tutor') {
                 $('#tutor-view').removeClass('hidden');
                 $('#student-view').addClass('hidden');
 
@@ -187,10 +192,9 @@ function init() {
                 $(function () { //reload page 20 seconds
                     setInterval(function () {
                         heartBeat();
-                    }, 20000);
+                    }, 60000);
                 });
             }
-
 
             gapi.hangout.data.onStateChanged.add(function (eventObj) {
                 updateStateUi(eventObj.state);
@@ -230,11 +234,16 @@ $(function () {
 
     // $table is defined above
     $('#btn-subjects').click(function () {
-        publish(JSON.stringify($table.bootstrapTable('getSelections')));
+        publish($table.bootstrapTable('getSelections'));
     });
 
     $('#btn-survey').click(function () {
         postSurvey();
+    });
+
+    $('#feedback').click(function () {
+        var url = 'http://kaplan.libsurveys.com/loader.php?id=7777f816624c182ea729979de88aeabc';
+        window.open(url, "", "width=1002,height=700,location=0,menubar=0,scrollbars=1,status=1,resizable=0")
     });
 
 });

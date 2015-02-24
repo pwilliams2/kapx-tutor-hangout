@@ -1,4 +1,32 @@
 body {
-  font-family: Verdana, Helvetica, sans-serif;
-  background-color: #DDDDDD;
+    font-family: Verdana, Helvetica, sans-serif;
+    background-color: #DDDDDD;
+}
+
+.feedback-tab {
+    /*position: fixed;*/
+    z-index: 30000;
+    /*bottom: -3px;*/
+    left: 3px;
+    border: 3px solid #F49921;
+    padding: 10px;
+    background-color: #FEF8F1;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    -khtml-border-radius: 4px;
+    border-radius: 4px;
+    -moz-box-shadow: 0px 0px 4px 2px rgba(0, 0, 0, 0.5);
+    -webkit-box-shadow: 0px 0px 4px 2px rgba(0, 0, 0, 0.5);
+    box-shadow: 0px 0px 4px 2px rgba(0, 0, 0, 0.5);
+    text-shadow: 1px 1px 0 white;
+}
+.feedback-tab a {
+    text-decoration: none;
+	color: #42AB3C;
+}
+.feedback-icon {
+    background-image: url(../img/feedback_animate_icon.gif);
+    background-repeat: no-repeat;
+    background-position: left center;
+    padding-left: 13px;
 }
