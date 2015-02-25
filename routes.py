@@ -3,8 +3,9 @@
 # RedirectRoute: http://webapp-improved.appspot.com/api/webapp2_extras/routes.html#webapp2_extras.routes.RedirectRoute
 from webapp2_extras.routes import RedirectRoute
 
-from controllers import handlers,pages
+from controllers import handlers,pages, surveys
 import utils
+
 
 
 secure_scheme = 'https'
@@ -29,7 +30,7 @@ _routes = [
     RedirectRoute('/subscribe', handlers.SubscribeHandler, name='Subscribe', strict_slash=True),
     RedirectRoute('/unsubscribe', handlers.SubscribeHandler, name='Subscribe', strict_slash=True),
 
-    RedirectRoute('/surveys/data', handlers.SurveyHandler, name='Surveys', strict_slash=True),
+    RedirectRoute('/surveys/data', surveys.SurveyHandler, name='Surveys', strict_slash=True),
     RedirectRoute('/subjects', handlers.SubjectsHandler, name='Subjects', strict_slash=True),
     RedirectRoute('/heartbeat', handlers.HeartbeatHandler, name='Heartbeat', strict_slash=True),
     RedirectRoute('/logs', utils.LogPage, name='Logs', strict_slash=True),

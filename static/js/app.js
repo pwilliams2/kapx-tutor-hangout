@@ -85,13 +85,13 @@ function postSurvey() {
 }
 // Publish tutor availability for subject(s)
 function publish(subjects) {
-    jsonSubjects_ = subjects;
+    jsonSubjects_ = subjects;  // Used in updateParticipantsUi to display subject
     subjects_ = JSON.stringify(subjects);
     var arr = hangoutURL.split('/');
     gid = arr[arr.length - 1];
     pid = localParticipant.person.id;
 
-    var payload = 'subjects=' + subjects
+    var payload = 'subjects=' + subjects_
         + '&gid=' + gid
         + '&pid=' + pid
         + '&pName=' + localParticipant.person.displayName

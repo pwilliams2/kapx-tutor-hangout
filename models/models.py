@@ -30,7 +30,7 @@ class TutorHangoutSessions(EndpointsModel):
     participant_name = ndb.StringProperty()
     start = ndb.DateTimeProperty(auto_now_add=True)
     end = ndb.DateTimeProperty()
-    duration = ndb.FloatProperty()
+    duration = ndb.FloatProperty()   # Minutes
     survey_key = ndb.StringProperty()
 
 
@@ -57,3 +57,16 @@ class TutorSurveys(EndpointsModel):
     overall = ndb.FloatProperty()
     gid = ndb.StringProperty()
     comments = ndb.StringProperty()
+
+class TutorArchive(EndpointsModel):
+    _message_fields_schema = \
+        ('entityKey', 'tutor_id', 'subjects', 'tutor_name', 'create_date', 'last_modified', 'elapsed_time',
+         'actual_time')
+    tutor_id = ndb.StringProperty()  # participant.person.id
+    subjects = ndb.StringProperty(repeated=True)
+    tutor_name = ndb.StringProperty()
+    create_date = ndb.DateTimeProperty(auto_now_add=True)
+    last_modified = ndb.DateTimeProperty(auto_now=True)
+    number_sessions = ndb.IntegerProperty()
+    elapsed_time = ndb.FloatProperty()  # Hours
+    actual_time = ndb.FloatProperty() # Hours

@@ -25,6 +25,15 @@ def autolog(message):
         func.co_firstlineno
     ))
 
+def dump_json(a_list):
+    if a_list:
+        data = {
+            "data": [item for item in a_list]
+        }
+        return JSONEncoder().encode(data)
+        # return json.dumps(data)
+    else:
+        return [{}]
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
