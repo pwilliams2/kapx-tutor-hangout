@@ -14,7 +14,8 @@ from lib.base import BaseHandler
 from models.models import TutorSubjects, TutorHangoutSessions, TutorArchive
 
 
-tutorQueue = deque()  # FIFO q to serve subscribers
+_tutorQueue = deque()  # FIFO q to serve subscribers
+_is_subjects_available = True
 
 
 def remove_stale_sessions():
@@ -41,15 +42,14 @@ def update_tutor_archive(tutor):
     """ Compute elapsed time online and actual time in session
     :return:
     """
-
+    autolog('updating TutorArchive...')
     elapsed = 0.0
     actual = 0.0
     tutor_session_list = DataHandler.get_tutor_sessions(tutor.tutor_id)
     if tutor_session_list:
         aggregate_session_data(tutor_session_list)
 
-    tutor_archive = TutorArchive.query(ancestor=hapi.TUTOR_ARCHIVE_PARENT_KEY).filter(
-        TutorArchive.tutor_id == tutor.tutor_id)
+    tutor_archive = DataHandler.get_tutor_archive(tutor.tutor_id)
     if tutor_archive:
         pass
     else:
@@ -74,49 +74,48 @@ def assign_available_tutors(subjects_list):
     """
 
     try:
-        autolog('tutorQueue size %s' % str(len(tutorQueue)))
+        autolog('_tutorQueue size %s' % str(len(_tutorQueue)))
 
-        size = len(tutorQueue)
+        size = len(_tutorQueue)
         for subject in subjects_list:  # Get next an available tutor in q
             i = 0
             subject.is_available = False
             subject.gid = ''
 
-            while tutorQueue and i < size:
+            while _tutorQueue and i < size:
                 i += 1
-                current_tutor = tutorQueue.pop()
+                current_tutor = _tutorQueue.pop()
 
                 tutor_list = DataHandler.get_tutor_subjects(current_tutor.tutor_id, current_tutor.gid)
                 if tutor_list:
                     tutor = tutor_list[0]
 
                     if subject.subject in tutor.subjects and tutor.participants_count < tutor.max_participants:
-                        autolog('Tutor match found for: %s' % subject)
+                        autolog('Tutor match found for: %s' % subject.subject)
                         subject.gid = tutor.gid  # Assign a tutor to the subject
                         subject.is_available = True
                         subject.put()
-                        tutorQueue.appendleft(tutor)  # Put the tutor back in the q
+                        _tutorQueue.appendleft(tutor)  # Put the tutor back in the q
                         break
                     else:
-                        tutorQueue.appendleft(tutor)  # Put the tutor back in the q
+                        _tutorQueue.appendleft(tutor)  # Put the tutor back in the q
             subject.put()
         return True
     except OverQuotaError, e:
-        autolog('Over Quota Error, bypassing for now: ' + str(e))
+        autolog('Over Quota Error, bypassing for now: %s ' % str(e))
         raise
 
 
 def update_subjects():
     """ Update the subjects table to reflect the availability of the current tutors """
-
     subjects_list = DataHandler.get_hangout_subjects()
 
     # Retrieve Available Tutors and their subjects
-    avail_tutors = DataHandler.get_tutor_subjects()
-
-    if not avail_tutors:  # There are no tutors available
+    if not DataHandler.get_tutor_subjects():  # There are no tutors available
         autolog('No available tutors.')
-        for subject in subjects_list:  # Set all subjects to unavailable
+        assigned_list = [item for item in subjects_list if item.is_available]
+        for subject in assigned_list:  # Set all subjects to unavailable
+            autolog('setting subject %s to false' % subject.subject)
             try:
                 subject.is_available = False
                 subject.gid = None
@@ -134,15 +133,15 @@ def remove_tutor_from_queue(tutor_id):
     :return:
     """
 
-    size = len(tutorQueue)
+    size = len(_tutorQueue)
     i = 0
     while i < size:
         i += 1
-        tutor = tutorQueue.pop()
+        tutor = _tutorQueue.pop()
         if tutor.tutor_id == tutor_id:
             return True
         else:
-            tutorQueue.appendleft(tutor)  # Put it back if it doesn't match
+            _tutorQueue.appendleft(tutor)  # Put it back if it doesn't match
     return False
 
 
@@ -221,8 +220,8 @@ class PublishHandler(BaseHandler):
                 ts_key = tutor.put()
 
                 autolog("Tutor subjects: %s" % str(tutor.subjects))
-                if len(tutorQueue) == 0:
-                    tutorQueue.appendleft(tutor)
+                if len(_tutorQueue) == 0:
+                    _tutorQueue.appendleft(tutor)
             else:
                 autolog("New tutor")
                 tutor = TutorSubjects(parent=hapi.TUTOR_SUBJECTS_PARENT_KEY,
@@ -235,7 +234,7 @@ class PublishHandler(BaseHandler):
                 ts_key = tutor.put()
 
                 # Add the tutor to the FIFO queue.
-                tutorQueue.appendleft(tutor)
+                _tutorQueue.appendleft(tutor)
             self.response.out.write(ts_key.urlsafe())
         except Exception, e:
             autolog('msg: ' + str(e))
@@ -289,7 +288,7 @@ class SubscribeHandler(BaseHandler):
                 tutor = DataHandler.get_tutor_subjects(tutor_id)
                 # Add tutor back to queue
                 if tutor:
-                    tutorQueue.appendleft(tutor[0])
+                    _tutorQueue.appendleft(tutor[0])
 
         else:  # Create new TutorHangoutSession
             autolog("Creating new session")
@@ -316,7 +315,7 @@ class SubjectsHandler(BaseHandler):
     def get(self):
         """ Returns the list of subjects with available tutors """
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
-        # remove_stale_sessions()
+        remove_stale_sessions()
         update_subjects()
 
         try:

@@ -9,21 +9,37 @@ import urllib
 from google.appengine.api import logservice
 from google.appengine.ext import ndb
 import webapp2
-from apiclient import discovery
-import tutor_hangouts_api as hapi
 
-def autolog(message):
+
+def autolog(message, level=None):
     "Automatically log the current function details."
     # Get the previous frame in the stack, otherwise it would
     # be this function!!!
     func = inspect.currentframe().f_back.f_code
     # Dump the message + the name of this function to the log.
-    logging.debug("%s: %s in %s:%i" % (
-        message,
-        func.co_name,
-        func.co_filename,
-        func.co_firstlineno
-    ))
+
+    if level and level.lower() == 'info':
+        logging.info("%s: %s in %s:%i" % (
+            message,
+            func.co_name,
+            func.co_filename,
+            func.co_firstlineno
+        ))
+    elif level and level.lower() == 'error':
+        logging.error("%s: %s in %s:%i" % (
+            message,
+            func.co_name,
+            func.co_filename,
+            func.co_firstlineno
+        ))
+    else:
+        logging.debug("%s: %s in %s:%i" % (
+            message,
+            func.co_name,
+            func.co_filename,
+            func.co_firstlineno
+        ))
+
 
 def dump_json(a_list):
     if a_list:
@@ -34,6 +50,7 @@ def dump_json(a_list):
         # return json.dumps(data)
     else:
         return [{}]
+
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):

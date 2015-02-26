@@ -51,16 +51,24 @@
 <div class="container-fluid">
     <div class="row">
         <!-- Sidebar -->
-        <div class="col-sm-3 col-md-2 sidebar">
-            <ul class="nav nav-sidebar">
-                <li class="active"><a href="#">Overview</a></li>
-                <li><a href="/sessions">Sessions</a></li>
-                <li><a href="/surveys">Surveys</a></li>
-                <li><a href="/analytics">Analytics</a></li>
-                <li><a href="/reports">Tutor Report Card</a></li>
-                <li><a href="/admin">Admin</a></li>
-            </ul>
-
+        <div class="col-sm-3 col-md-2 navbar-default sidebar" role="navigation">
+            <div class="sidebar-nav navbar-collapse">
+                <ul class="nav in" id="side-menu">
+                    <li class="active"><a href="#"><i class="fa fa-dashboard fa-fw"></i> Overview</a></li>
+                    <li><a href="/sessions"><i class="fa fa-users"></i> Sessions</a></li>
+                    <!--<li><a href="/surveys">Surveys</a></li>-->
+                    <li><a href="/analytics"><i class="fa fa-bar-chart-o fa-fw"></i> Analytics</a></li>
+                    <li><a href="/reports"><i class="fa fa-edit fa-fw"></i> Tutor Report Card</a></li>
+                    <li>
+                        <a href="#"><i class="fa fa-wrench fa-fw"></i> Admin<span class="fa arrow"></span></a>
+                        <ul class="nav nav-second-level collapse" aria-expanded="false" style="height: 0px;">
+                                <li>
+                                    <a href="/admin_subjects">Manage Subjects</a>
+                                </li>
+                            </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
 
         <div id="page-wrapper" style="min-height: 247px;">

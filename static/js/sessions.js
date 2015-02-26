@@ -60,22 +60,22 @@ $(function () {
                     }
                     return val;
                 }
-            },
-            {
-                data: "survey_key",
-                "render": function (val, type, data, meta) {
-                    if (type == "display") {
-                        if (val) {
-                            val = '<a href="#" class="survey-link" onClick=popupSurvey("' + val + '");>Survey</a>'
-                            //val = '<a class="survey-link">Survey</a>'
-                        }
-                        else {
-                            //val = '<a href="#" onClick=popupSurvey(12345)>Survey</a>';
-                        }
-                    }
-                    return val;
-                }
             }
+            //{
+            //    data: "survey_key",
+            //    "render": function (val, type, data, meta) {
+            //        if (type == "display") {
+            //            if (val) {
+            //                val = '<a href="#" class="survey-link" onClick=popupSurvey("' + val + '");>Survey</a>'
+            //                //val = '<a class="survey-link">Survey</a>'
+            //            }
+            //            else {
+            //                //val = '<a href="#" onClick=popupSurvey(12345)>Survey</a>';
+            //            }
+            //        }
+            //        return val;
+            //    }
+            //}
         ],
         "columnDefs": [{
             "searchable": false,

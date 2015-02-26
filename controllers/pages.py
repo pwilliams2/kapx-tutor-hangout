@@ -1,3 +1,4 @@
+from controllers.data import DataHandler
 from lib.base import BaseHandler
 from models.models import *
 
@@ -5,6 +6,16 @@ from models.models import *
 class AdminPage(BaseHandler):
     def get(self):
         self.render_template('templates/admin.html')
+
+class AdminSubjectsPage(BaseHandler):
+    def get(self):
+        subjects = DataHandler.get_hangout_subjects()
+        if subjects:
+            template_data = {'subjects_query': subjects}
+            self.render_template('templates/admin_subjects.html', **template_data)
+        else:
+            self.render_template('templates/unavailable.html')
+
 
 
 class AnalyticsPage(BaseHandler):

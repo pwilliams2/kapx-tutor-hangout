@@ -65,3 +65,16 @@ class DataHandler(BaseHandler):
         :return:
         """
         return HangoutSubjects.query(ancestor=hapi.SUBJECTS_PARENT_KEY).order(HangoutSubjects.subject).fetch()
+
+    @staticmethod
+    def get_tutor_archive(tutor_id=None):
+        """
+        :param tutor_id:
+        :return:
+        """
+        if tutor_id:
+            return TutorArchive.query(ancestor=hapi.TUTOR_ARCHIVE_PARENT_KEY).filter(
+                TutorArchive.tutor_id == tutor_id)
+        else:
+            return TutorArchive.query(ancestor=hapi.TUTOR_ARCHIVE_PARENT_KEY).order(-TutorArchive.last_modified).fetch(100)
+

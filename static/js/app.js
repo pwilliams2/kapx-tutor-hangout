@@ -85,7 +85,7 @@ function postSurvey() {
 }
 // Publish tutor availability for subject(s)
 function publish(subjects) {
-    jsonSubjects_ = subjects;  // Used in updateParticipantsUi to display subject
+    jsonSubjects_ = subjects[0].subject;  // Used in updateParticipantsUi to display subject
     subjects_ = JSON.stringify(subjects);
     var arr = hangoutURL.split('/');
     gid = arr[arr.length - 1];
@@ -135,11 +135,9 @@ function updateParticipantsUi(participants) {
         var appData = gadgets.views.getParams()['appData'];
         console.log('appData:' + appData);
         console.log('subscribing...');
-        console.log('subject: ' + jsonSubjects_[0].subject);
-        $('#subject').html(jsonSubjects_[0].subject)
-
-        $('.clientParticipant').html(participants_[0].person.displayName);
-       // $('.subject').html(subjects_);
+        console.log('subject: ' + jsonSubjects_);
+        $('.subject').html(jsonSubjects_);
+        $('.clientParticipant').html(participants_[1].person.displayName);
 
         studentId = participants_[0].person.id;
         httpRequest('POST', SERVER_PATH, 'subscribe',
