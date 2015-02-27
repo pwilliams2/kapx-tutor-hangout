@@ -128,7 +128,6 @@ function updateParticipantsUi(participants) {
     count = participants.length; // Update the count
 }
 
-
 // Post a heartbeat to inform host that this tutor H-O is still available
 function heartBeat() {
     httpRequest('GET', SERVER_PATH, 'heartbeat', 'gid=' + gid + '&pid=' + pid + "&count=" + count);
@@ -183,7 +182,7 @@ $(function () {
 
     // $table is defined above
     $('#btn-subjects').click(function () {
-        var subjects =  $table.bootstrapTable('getSelections');
+        var subjects = $table.bootstrapTable('getSelections');
         console.log(subjects[0].subject);
         $('#subject').html(subjects[0].subject)
         publish(JSON.stringify($table.bootstrapTable('getSelections')));
@@ -193,22 +192,29 @@ $(function () {
         postSurvey();
     });
 
-});
-
-$(function () {
-    $('.aSpinEdit').spinedit({
-        minimum: 0,
-        maximum: 5,
-        step: .25,
-        numberOfDecimals: 2
+     $('#btn-calendar').click(function () {
+        $('#app-calendar').toggleClass('hidden');
+         $('#app-calculator').addClass('hidden');
     });
 
-
-    $('.aSpinEdit').on("valueChanged", function (e) {
-        console.log(e.value);
+      $('#btn-calculator').click(function () {
+        $('#app-calculator').toggleClass('hidden');
+        $('#app-calendar').addClass('hidden');
     });
 
+    $('.today').html(getDate());
+
+    webix.ui({
+				container:"app-calendar",
+				weekHeader:true,
+				view:"calendar",
+				events:webix.Date.isHoliday,
+				timepicker:true,
+                width:240
+			});
+
 });
+
 
 
 //gadgets.util.registerOnLoadHandler(init);

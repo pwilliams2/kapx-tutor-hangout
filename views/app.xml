@@ -27,6 +27,9 @@
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/bootstrap-table.min.css">
     <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/main.css"/>
+    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/calc.css"/>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="//kx-tutor-hangout-app.appspot.com/css/webix.css">
 
     <script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>
 <head>
@@ -34,6 +37,7 @@
 <div class="container hidden" id="tutor-view" style="width: 250px">
     <div class="row well well-sm">
         <div>
+            <p>Today is: <span class="today"></span></p>
             <p><b>Instructor: </b><span class="instructor"></span></p>
             <p><b>Student: </b><span class="clientParticipant"></span></p>
             <p><b>Subject: </b><span class="subject"></span></p>
@@ -62,14 +66,80 @@
     </div>
 </div>
 <div class="container" id="student-view" style="width: 275px">
-    <div class="row well well-sm" style="margin-left: 5px">
+    <div class="row well well-sm">
         <div>
+            <p>Today is: <span class="today"></span></p>
             <p><b>Instructor: </b><span class="instructor"></span></p>
-            <p><b>Subject: </b><span class="subject"></span></p>
+
         </div>
     </div>
-    <div class="row" style="margin-left: 5px;margin-top: 250px;">
+    <!-- Toolbox button panel -->
+    <div class="row">
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+                Hangout Toolbox
+            </div>
+            <!-- /.panel-heading -->
+            <div class="panel-body">
+                <a class="btn btn-block btn-primary" id="btn-calendar">
+                    <i class="fa fa-calendar"></i> Calendar
+                </a>
+                <a class="btn btn-block btn-success" id="btn-calculator">
+                    <i class="fa fa-calculator"></i> Calculator
+                </a>
+                <a class="btn btn-block btn-info">
+                    <i class="fa fa-book"></i> Dictionary
+                </a>
 
+                <hr>
+            </div>
+            <!-- /.panel-body -->
+        </div>
+    </div>
+    <!-- Calculator / Calendar modals -->
+  <div class="row">
+        <div class="hidden" id="app-calculator">
+
+            <FORM NAME="Calc" id="calculator">
+                <TABLE BORDER=2>
+                    <TR>
+                        <TD>
+                            <INPUT TYPE="text" NAME="Input">
+                            <br>
+                        </TD>
+                    </TR>
+                    <TR>
+                        <TD>
+                            <INPUT TYPE="button" NAME="one" VALUE="  1  " OnClick="Calc.Input.value += '1'">
+                            <INPUT TYPE="button" NAME="two" VALUE="  2  " OnCLick="Calc.Input.value += '2'">
+                            <INPUT TYPE="button" NAME="three" VALUE="  3  " OnClick="Calc.Input.value += '3'">
+                            <INPUT TYPE="button" NAME="plus" VALUE="  +  " OnClick="Calc.Input.value += ' + '">
+                            <br>
+                            <INPUT TYPE="button" NAME="four" VALUE="  4  " OnClick="Calc.Input.value += '4'">
+                            <INPUT TYPE="button" NAME="five" VALUE="  5  " OnCLick="Calc.Input.value += '5'">
+                            <INPUT TYPE="button" NAME="six" VALUE="  6  " OnClick="Calc.Input.value += '6'">
+                            <INPUT TYPE="button" NAME="minus" VALUE="  -  " OnClick="Calc.Input.value += ' - '">
+                            <br>
+                            <INPUT TYPE="button" NAME="seven" VALUE="  7  " OnClick="Calc.Input.value += '7'">
+                            <INPUT TYPE="button" NAME="eight" VALUE="  8  " OnCLick="Calc.Input.value += '8'">
+                            <INPUT TYPE="button" NAME="nine" VALUE="  9  " OnClick="Calc.Input.value += '9'">
+                            <INPUT TYPE="button" NAME="times" VALUE="  x  " OnClick="Calc.Input.value += ' * '">
+                            <br>
+                            <INPUT TYPE="button" NAME="clear" VALUE="  c  " OnClick="Calc.Input.value = ''">
+                            <INPUT TYPE="button" NAME="zero" VALUE="  0  " OnClick="Calc.Input.value += '0'">
+                            <INPUT TYPE="button" NAME="DoIt" VALUE="  =  "
+                                   OnClick="Calc.Input.value = eval(Calc.Input.value)">
+                            <INPUT TYPE="button" NAME="div" VALUE="  /  " OnClick="Calc.Input.value += ' / '">
+                            <br>
+                        </TD>
+                    </TR>
+                </TABLE>
+            </FORM>
+        </div>
+
+    </div>
+    <div class="hidden" id="app-calendar"></div>
+    <div class="row" style="margin-top: 20px;">
         <div id="feedback-tab" class="feedback-tab">
 		<span><a href="javascript:;" class="feedback-icon" id="feedback">Please give us your feedback!</a></span>
 	</div>
@@ -79,12 +149,12 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-spinedit.js"></script>
-<!-- The JavaScript for this app. This must always be a full URL not a
-     relative path.
-     Tip: You can load it from a local web server such as
-     http://localhost/app.js for faster single user development -->
+
+    <script src="//kx-tutor-hangout-app.appspot.com/js/utils.js?v=1.0"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.20"></script>
+    <script src="//kx-tutor-hangout-app.appspot.com/js/calc.js?v=1.21"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
+    <script src="//kx-tutor-hangout-app.appspot.com/js/webix.js"></script>
 </body>
 ]]></Content>
 </Module>

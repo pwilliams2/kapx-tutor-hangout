@@ -6,10 +6,13 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
-   <!--<link rel="stylesheet" href="css/bootstrap.css">-->
-    <!--<link rel="stylesheet" href="css/bootstrap-spinedit.css"/>-->
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
     <link rel="stylesheet" href="css/bootstrap-table.min.css">
     <link rel="stylesheet" href="css/main.css"/>
+    <link rel="stylesheet" href="css/calc.css"/>
+    <link rel="stylesheet" href="css/webix.css">
+
     <!--<script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>-->
     <title>KX Hangout</title>
 </head>
@@ -17,9 +20,12 @@
 <div class="container" id="tutor-view" style="width: 250px">
     <div class="row well well-sm">
         <div>
+            <p>Today is: <span class="today"></span></p>
+
             <p><b>Instructor: </b><span class="instructor"></span></p>
 
             <p><b>Student: </b><span class="clientParticipant"></span></p>
+
             <p><b>Subject: </b><span id="subject"></span></p>
         </div>
     </div>
@@ -50,60 +56,95 @@
 <div class="container" id="student-view" style="width: 250px">
     <div class="row well well-sm" style="margin-left: 5px">
         <div>
+            <p>Today is: <span class="today"></span></p>
+
             <p><b>Instructor: </b><span class="instructor"></span></p>
 
         </div>
+    </div
+            <!-- Toolbox button panel -->
+    <div class="row">
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+                Hangout Toolbox
+            </div>
+            <!-- /.panel-heading -->
+            <div class="panel-body">
+                <a class="btn btn-block btn-primary" id="btn-calendar" data-toggle="modal" data-target="#app-calendar">
+                    <i class="fa fa-calendar"></i> Calendar
+                </a>
+                <a class="btn btn-block btn-success" id="btn-calculator" data-toggle="modal" data-target="#calc-modal">
+                    <i class="fa fa-calculator"></i> Calculator
+                </a>
+                <a class="btn btn-block btn-info">
+                    <i class="fa fa-book"></i> Dictionary
+                </a>
+
+                <hr>
+            </div>
+            <!-- /.panel-body -->
+
+        </div>
     </div>
-    <div class="row" style="margin-left: 5px;margin-top: 200px;">
+    <div class="row hidden" id="app-calculator">
+        <div>
+            <FORM NAME="Calc" id="calculator">
+                <TABLE BORDER=2>
+                    <TR>
+                        <TD>
+                            <INPUT TYPE="text" NAME="Input">
+                            <br>
+                        </TD>
+                    </TR>
+                    <TR>
+                        <TD>
+                            <INPUT TYPE="button" NAME="one" VALUE="  1  " OnClick="Calc.Input.value += '1'">
+                            <INPUT TYPE="button" NAME="two" VALUE="  2  " OnCLick="Calc.Input.value += '2'">
+                            <INPUT TYPE="button" NAME="three" VALUE="  3  " OnClick="Calc.Input.value += '3'">
+                            <INPUT TYPE="button" NAME="plus" VALUE="  +  " OnClick="Calc.Input.value += ' + '">
+                            <br>
+                            <INPUT TYPE="button" NAME="four" VALUE="  4  " OnClick="Calc.Input.value += '4'">
+                            <INPUT TYPE="button" NAME="five" VALUE="  5  " OnCLick="Calc.Input.value += '5'">
+                            <INPUT TYPE="button" NAME="six" VALUE="  6  " OnClick="Calc.Input.value += '6'">
+                            <INPUT TYPE="button" NAME="minus" VALUE="  -  " OnClick="Calc.Input.value += ' - '">
+                            <br>
+                            <INPUT TYPE="button" NAME="seven" VALUE="  7  " OnClick="Calc.Input.value += '7'">
+                            <INPUT TYPE="button" NAME="eight" VALUE="  8  " OnCLick="Calc.Input.value += '8'">
+                            <INPUT TYPE="button" NAME="nine" VALUE="  9  " OnClick="Calc.Input.value += '9'">
+                            <INPUT TYPE="button" NAME="times" VALUE="  x  " OnClick="Calc.Input.value += ' * '">
+                            <br>
+                            <INPUT TYPE="button" NAME="clear" VALUE="  c  " OnClick="Calc.Input.value = ''">
+                            <INPUT TYPE="button" NAME="zero" VALUE="  0  " OnClick="Calc.Input.value += '0'">
+                            <INPUT TYPE="button" NAME="DoIt" VALUE="  =  "
+                                   OnClick="Calc.Input.value = eval(Calc.Input.value)">
+                            <INPUT TYPE="button" NAME="div" VALUE="  /  " OnClick="Calc.Input.value += ' / '">
+                            <br>
+                        </TD>
+                    </TR>
+                </TABLE>
+            </FORM>
+        </div>
+    </div>
+    <div class="hidden" id="app-calendar"></div>
+    <div class="row" style="margin-top: 20px;">
 
         <div id="feedback-tab" class="feedback-tab">
-		<span><a href="javascript:;" class="feedback-icon" id="feedback">Please give us your feedback!</a></span>
-	</div>
-        <!--<div id="tutor-rating">-->
-            <!--<p class="lead" style="margin-top: 5px">-->
-                <!--Please rate your tutor:-->
-            <!--</p>-->
-            <!--<table style="width: 250px">-->
-                <!--<tr>-->
-                    <!--<td>Knowledgable</td>-->
-                    <!--<td><input type="text" id="spinknow" class="aSpinEdit spinedit"/>-->
+            <span><a href="javascript:;" class="feedback-icon" id="feedback">Please give us your feedback!</a></span>
+        </div>
 
-                    <!--</td>-->
-                <!--</tr>-->
-                <!--<tr style="margin-top: 5px">-->
-                    <!--<td>Communications</td>-->
-                    <!--<td>-->
-                        <!--<input type="text" id="spincomm" class="aSpinEdit spinedit noSelect"/>-->
-
-                    <!--</td>-->
-                <!--</tr>-->
-                 <!--<tr style="margin-top: 5px">-->
-                    <!--<td>Overall</td>-->
-                    <!--<td>-->
-                        <!--<input type="text" id="spinall" class="aSpinEdit spinedit noSelect"/>-->
-
-                    <!--</td>-->
-                <!--</tr>-->
-            <!--</table>-->
-
-            <!--<p style="margin-top: 5px;">-->
-                <!--<textarea row="3" cols="40" id="comments" placeholder="Comments"></textarea>-->
-            <!--</p>-->
-
-            <!--<p style="margin-top:5px">-->
-                <!--<input id="btn-survey" class="btn btn-primary" type="button" value="Submit">-->
-            <!--</p>-->
-        <!--</div>-->
     </div>
+
 </div>
 
-        <!-- Script below this line -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
-    <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-spinedit.js"></script>
-
-    <script src="js/index.js?v=1.03"></script>
-    <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
+<!-- Script below this line -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+<script src="js/utils.js?v=1.03"></script>
+<script src="js/index.js?v=1.03"></script>
+<script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>
+<!-- PrefixFree -->
+<script src="js/calc.js"></script>
+<script src="js/webix.js" type="text/javascript" charset="utf-8"></script>
 
 
 

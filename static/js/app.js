@@ -21,7 +21,7 @@ var MAX_COUNT = 2;
 var hangoutURL = '';
 var gid = '';
 var pid = '';
-var studentId='';
+var studentId = '';
 var tutorName = '';
 var localParticipant;
 var count = 0;
@@ -244,16 +244,25 @@ $(function () {
         window.open(url, "", "width=1002,height=700,location=0,menubar=0,scrollbars=1,status=1,resizable=0")
     });
 
-});
-
-$(function () {
-    $('.aSpinEdit').spinedit({
-        minimum: 0,
-        maximum: 5,
-        step: .25,
-        numberOfDecimals: 2
+    $('#btn-calendar').click(function () {
+        $('#app-calendar').toggleClass('hidden');
+        $('#app-calculator').addClass('hidden');
+        console.log('btn-calendar click');
     });
 
+    $('#btn-calculator').click(function () {
+        $('#app-calculator').toggleClass('hidden');
+        $('#app-calendar').addClass('hidden');
+    });
+    $('.today').html(getDate());
+
+    webix.ui({
+				container:"app-calendar",
+				weekHeader:true,
+				view:"calendar",
+				events:webix.Date.isHoliday,
+                width:240
+			});
 });
 
 
