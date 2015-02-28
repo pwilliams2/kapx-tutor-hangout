@@ -43,9 +43,18 @@
             <p><b>Subject: </b><span class="subject"></span></p>
         </div>
     </div>
+    <div class="row" style="margin-bottom: 5px">
+        <div class="btn-group" role="group" aria-label="...">
+            <button style="width: 125px" type="button" id="btn-subjects-menu" class="btn btn-default">Subjects</button>
+            <button style="width: 125px" type="button" id="btn-toolbox-menu" class="btn btn-default">Toolbox</button>
+        </div>
+    </div>
     <div class="row">
-        <div>
-            <p class="lead">Select tutoring subject(s):</p>
+        <div class="panel panel-default" id="subject-options">
+            <div class="panel-heading">
+                Select tutoring subject(s):
+            </div>
+
             <div>
                 <table id="subjectTable" class="table" data-toggle="table"
                        data-height="280" data-width="20"
@@ -58,13 +67,35 @@
                     </thead>
                 </table>
                 <p style="margin-top:5px">
-                    <input id="btn-subjects" class="btn btn-primary" type="button" value="Submit">
+                    <input id="btn-subjects" class="btn btn-primary btn-block" type="button" value="Submit">
                 </p>
+
                 <p id="message"></p>
+            </div>
+        </div>
+        <div class="panel panel-warning hidden" id="tutor-toolbox">
+            <div class="panel-heading">
+                Hangout Toolbox
+            </div>
+            <!-- /.panel-heading -->
+            <div class="panel-body">
+                <a class="btn btn-block btn-primary btn-calendar">
+                    <i class="fa fa-calendar"></i> Calendar
+                </a>
+                <a class="btn btn-block btn-success btn-calculator">
+                    <i class="fa fa-calculator"></i> Calculator
+                </a>
+                <a class="btn btn-block btn-info btn-dictionary">
+                    <i class="fa fa-book"></i> Dictionary
+                </a>
+
+                <hr>
             </div>
         </div>
     </div>
 </div>
+
+    <!-- Student view -->
 <div class="container" id="student-view" style="width: 275px">
     <div class="row well well-sm">
         <div>
@@ -75,31 +106,40 @@
     </div>
     <!-- Toolbox button panel -->
     <div class="row">
-        <div class="panel panel-warning">
-            <div class="panel-heading">
-                Hangout Toolbox
-            </div>
-            <!-- /.panel-heading -->
-            <div class="panel-body">
-                <a class="btn btn-block btn-primary" id="btn-calendar">
-                    <i class="fa fa-calendar"></i> Calendar
-                </a>
-                <a class="btn btn-block btn-success" id="btn-calculator">
-                    <i class="fa fa-calculator"></i> Calculator
-                </a>
-                <a class="btn btn-block btn-info">
-                    <i class="fa fa-book"></i> Dictionary
-                </a>
+            <div class="panel panel-warning" id="student-toolbox">
+                <div class="panel-heading">
+                    Hangout Toolbox
+                </div>
+                <!-- /.panel-heading -->
+                <div class="panel-body">
+                    <a class="btn btn-block btn-primary btn-calendar">
+                        <i class="fa fa-calendar"></i> Calendar
+                    </a>
+                    <a class="btn btn-block btn-success btn-calculator">
+                        <i class="fa fa-calculator"></i> Calculator
+                    </a>
+                    <a class="btn btn-block btn-info btn-dictionary">
+                        <i class="fa fa-book"></i> Dictionary
+                    </a>
 
-                <hr>
+                    <hr>
+                </div>
+                <!-- /.panel-body -->
+
             </div>
-            <!-- /.panel-body -->
+        </div>
+        <div class="row" style="margin-top: 20px;">
+
+            <div id="feedback-tab" class="feedback-tab">
+                <span><a href="javascript:;" class="feedback-icon" id="feedback">Please give us your
+                    feedback!</a></span>
+            </div>
         </div>
     </div>
-    <!-- Calculator / Calendar modals -->
-  <div class="row">
+</div>
+<div class="container" id="app-view" style="width: 250px">
+    <div class="row">
         <div class="hidden" id="app-calculator">
-
             <FORM NAME="Calc" id="calculator">
                 <TABLE BORDER=2>
                     <TR>
@@ -136,14 +176,9 @@
                 </TABLE>
             </FORM>
         </div>
+        <div class="hidden" style="margin-top: 10px" id="app-calendar"></div>
 
     </div>
-    <div class="hidden" id="app-calendar"></div>
-    <div class="row" style="margin-top: 20px;">
-        <div id="feedback-tab" class="feedback-tab">
-		<span><a href="javascript:;" class="feedback-icon" id="feedback">Please give us your feedback!</a></span>
-	</div>
-
 </div>
         <!-- Script below this line -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
@@ -151,6 +186,7 @@
     <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-spinedit.js"></script>
 
     <script src="//kx-tutor-hangout-app.appspot.com/js/utils.js?v=1.0"></script>
+    <script src="//kx-tutor-hangout-app.appspot.com/js/hangout.js?v=1.20"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/app.js?v=1.20"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/calc.js?v=1.21"></script>
     <script src="//kx-tutor-hangout-app.appspot.com/js/bootstrap-table.min.js"></script>

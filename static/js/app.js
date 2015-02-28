@@ -16,198 +16,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-var SERVER_PATH = '//kx-tutor-hangout-app.appspot.com/';
-var MAX_COUNT = 2;
-var hangoutURL = '';
-var gid = '';
-var pid = '';
-var studentId = '';
-var tutorName = '';
-var localParticipant;
-var count = 0;
-var participants_ = null;
-var subjects_ = '';
-var jsonSubjects_ = null;
 
-
-// Post a heartbeat to inform host that this tutor H-O is still available
-function heartBeat() {
-    httpRequest('GET', SERVER_PATH, 'heartbeat', 'gid=' + gid + '&pid=' + pid + "&count=" + count);
-}
-
-function httpRequest(method, server, path, params) {
-    console.log('method: ' + method + ' path: ' + path + ' params: ' + params);
-
-    var http = new XMLHttpRequest();
-
-    http.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-            var jsonResponse = JSON.parse(http.responseText);
-        }
-        else {
-            console.log("readyState: " + this.readyState);
-            console.log("status: " + this.status);
-            console.log("statusText: " + http.responseText);
-        }
-    }
-    if (method && method.toUpperCase() == "GET") {
-        //e.g. path == "subscribe", params == gid="gasdfsfsfssdfdsfs"
-        http.open('GET', server + path + '?' + params);
-        http.send();
-    }
-    else if ((method && method.toUpperCase() == "POST")) {
-        http.open('POST', server + path);
-        http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        http.send(params);
-    }
-}
-
-function postSurvey() {
-    console.log('postSurvey');
-    studentId = localParticipant.person.id;
-    payload = 'student_id=' + studentId
-    + '&subjects=' + subjects_
-    + '&tutor_name=' + tutorName
-    + '&student_name=' + localParticipant.person.displayName
-    + '&gid=' + gid
-    + '&knowledge=' + $('#spinknow').val()
-    + '&communications=' + $('#spincomm').val()
-    + '&overall=' + $('#spinall').val()
-    + '&comments=' + $('#comments').val();
-
-    try {
-        $('#clientMessage').html("");
-        httpRequest('POST', SERVER_PATH, 'surveys/data', payload);
-        $('#clientMessage').html("Submitted");
-    } catch (e) {
-        console.log(e);
-    }
-}
-// Publish tutor availability for subject(s)
-function publish(subjects) {
-    jsonSubjects_ = subjects[0].subject;  // Used in updateParticipantsUi to display subject
-    subjects_ = JSON.stringify(subjects);
-    var arr = hangoutURL.split('/');
-    gid = arr[arr.length - 1];
-    pid = localParticipant.person.id;
-
-    var payload = 'subjects=' + subjects_
-        + '&gid=' + gid
-        + '&pid=' + pid
-        + '&pName=' + localParticipant.person.displayName
-        + '&count=' + count
-        + '&maxParticipants=' + MAX_COUNT;
-
-    try {
-        $('#message').html("");
-        httpRequest('POST', SERVER_PATH, 'publishsubjects', payload);
-        $('#message').html("Submitted");
-    } catch (e) {
-        console.log(e);
-    }
-
-}
-
-function updateStateUi(state) {
-    var countElement = document.getElementById('count');
-    var stateCount = state['count'];
-    if (!stateCount) {
-        console.log('probably 0');
-    } else {
-        console.log(stateCount.toString());
-    }
-}
-
-
-function updateParticipantsUi(participants) {
-    console.log('updateParticipants: Participants length == '
-    + participants.length + ' count == ' + count);
-
-    participants_ = participants;
-    for (i = 0; i < participants.length; i++) {
-        console.log('part ' + i + ' == ' + participants[i].person.id);
-    }
-
-    var arr = hangoutURL.split('/');
-    gid = arr[arr.length - 1];
-
-    if (participants.length > 1 && participants.length > count) {//Add
-        var appData = gadgets.views.getParams()['appData'];
-        console.log('appData:' + appData);
-        console.log('subscribing...');
-        console.log('subject: ' + jsonSubjects_);
-        $('.subject').html(jsonSubjects_);
-        $('.clientParticipant').html(participants_[1].person.displayName);
-
-        studentId = participants_[0].person.id;
-        httpRequest('POST', SERVER_PATH, 'subscribe',
-            'tutorId=' + pid
-            + '&subjects=' + subjects_
-            + '&tutorName=' + tutorName
-            + '&gid=' + gid
-            + '&studentId=' + studentId
-            + '&studentName=' + participants_[0].person.displayName);
-    }
-    else if (participants.length < count && count > 1) {
-        console.log('unsubscribing...');
-        $('.clientParticipant').html("");
-
-        httpRequest('POST', SERVER_PATH, 'unsubscribe',
-            'studentId=' + studentId
-            + '&tutorId=' + pid
-            + '&gid=' + gid
-            + '&exit=True');
-    }
-    count = participants.length; // Update the count
-}
-
-
-// A function to be run at app initialization time which registers our callbacks
-function init() {
-    console.log('Init app.');
-
-    var apiReady = function (eventObj) {
-        if (eventObj.isApiReady) {
-            console.log('API is ready');
-
-            hangoutURL = gapi.hangout.getHangoutUrl();
-            var arr = hangoutURL.split('/');
-            gid = arr[arr.length - 1];
-            console.log('hangoutUrl: ' + hangoutURL);
-
-            localParticipant = gapi.hangout.getLocalParticipant();  //TutorSubjects
-            tutorName = localParticipant.person.displayName
-            $('.instructor').html(tutorName);
-
-            var startData = gapi.hangout.getStartData();
-            console.log('start_data: ' + startData);
-
-            if (startData && startData.length > 1 && startData.toLowerCase() == 'tutor') {
-                $('#tutor-view').removeClass('hidden');
-                $('#student-view').addClass('hidden');
-
-                // Start heartbeat, but only run for tutor
-                $(function () { //reload page 20 seconds
-                    setInterval(function () {
-                        heartBeat();
-                    }, 60000);
-                });
-            }
-
-            gapi.hangout.data.onStateChanged.add(function (eventObj) {
-                updateStateUi(eventObj.state);
-            });
-
-            gapi.hangout.onParticipantsChanged.add(function (eventObj) {
-                updateParticipantsUi(eventObj.participants);
-            });
-
-            gapi.hangout.onApiReady.remove(apiReady);
-        }
-    };
-
-    gapi.hangout.onApiReady.add(apiReady);
-}
+var DICTIONARY_URL = 'http://dictionary.reference.com/';
+var SURVEY_URL = 'http://kaplan.libsurveys.com/loader.php?id=7777f816624c182ea729979de88aeabc';
 
 $(function () {
     console.log('loading subjects');
@@ -235,35 +46,46 @@ $(function () {
         publish($table.bootstrapTable('getSelections'));
     });
 
-    $('#btn-survey').click(function () {
-        postSurvey();
-    });
-
     $('#feedback').click(function () {
-        var url = 'http://kaplan.libsurveys.com/loader.php?id=7777f816624c182ea729979de88aeabc';
-        window.open(url, "", "width=1002,height=700,location=0,menubar=0,scrollbars=1,status=1,resizable=0")
+        window.open(SURVEY_URL, "", "width=1002,height=700,location=0,menubar=0,scrollbars=1,status=1,resizable=0")
     });
 
-    $('#btn-calendar').click(function () {
+    $('#btn-subjects-menu').click(function () {
+        $('#subject-options').removeClass('hidden');
+        $('#tutor-toolbox').addClass('hidden');
+        $('#app-calculator').addClass('hidden');
+        $('#app-calendar').addClass('hidden');
+        console.log('btn-subjects-menu click');
+    });
+
+    $('#btn-toolbox-menu').click(function () {
+        $('#tutor-toolbox').removeClass('hidden');
+        $('#subject-options').addClass('hidden');
+    });
+
+    $('.btn-calendar').click(function () {
         $('#app-calendar').toggleClass('hidden');
         $('#app-calculator').addClass('hidden');
         console.log('btn-calendar click');
     });
 
-    $('#btn-calculator').click(function () {
+    $('.btn-calculator').click(function () {
         $('#app-calculator').toggleClass('hidden');
         $('#app-calendar').addClass('hidden');
     });
+
+    $('.btn-dictionary').click(function () {
+        window.open(DICTIONARY_URL, "", "width=1002,height=700,location=0,menubar=0,scrollbars=1,status=1,resizable=0")
+    });
+
+
     $('.today').html(getDate());
 
     webix.ui({
-				container:"app-calendar",
-				weekHeader:true,
-				view:"calendar",
-				events:webix.Date.isHoliday,
-                width:240
-			});
+        container: "app-calendar",
+        weekHeader: true,
+        view: "calendar",
+        events: webix.Date.isHoliday,
+        width: 240
+    });
 });
-
-
-gadgets.util.registerOnLoadHandler(init);

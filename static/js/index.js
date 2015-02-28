@@ -17,6 +17,8 @@
  * the License.
  */
 var SERVER_PATH = '//kx-tutor-hangout-app.appspot.com/';
+var DICTIONARY_URL = 'http://dictionary.reference.com/';
+var SURVEY_URL = 'http://kaplan.libsurveys.com/loader.php?id=7777f816624c182ea729979de88aeabc';
 var MAX_COUNT = 2;
 var hangoutURL = '';
 var gid = 'gxx5k3fvmhehr5y2jy3utw2lmma';
@@ -133,31 +135,6 @@ function heartBeat() {
     httpRequest('GET', SERVER_PATH, 'heartbeat', 'gid=' + gid + '&pid=' + pid + "&count=" + count);
 }
 
-function postSurvey() {
-    console.log('postSurvey');
-
-    console.log('know: ' + $('#spinknow').val());
-    console.log('comm: ' + $('#spincomm').val());
-    console.log('overall : ' + $('#spinall').val());
-    console.log('comments: ' + $('#comments').val());
-
-    //payload = 'student_id=' + student_id
-    //+ '&subjects=' + subjects_
-    //+ '&tutorName=' + tutorName
-    //+ '&gid=' + gid
-    //+ '&knowledge=' + $('#spinknow').html()
-    //+ '&communications=' + $('#spincomm').text()
-    //+ '&overall=' + $('#spinall').text()
-    //+ '&comments=' + $('#comments').text();
-    //
-    //try {
-    //    $('#clientMessage').html("");
-    //    httpRequest('POST', SERVER_PATH, 'surveys', payload);
-    //    $('#clientMessage').html("Submitted");
-    //} catch (e) {
-    //    console.log(e);
-    //}
-}
 
 $(function () {
     console.log('loading subjects');
@@ -192,29 +169,32 @@ $(function () {
         postSurvey();
     });
 
-     $('#btn-calendar').click(function () {
+    $('#btn-calendar').click(function () {
         $('#app-calendar').toggleClass('hidden');
-         $('#app-calculator').addClass('hidden');
+        $('#app-calculator').addClass('hidden');
     });
 
-      $('#btn-calculator').click(function () {
+    $('#btn-calculator').click(function () {
         $('#app-calculator').toggleClass('hidden');
         $('#app-calendar').addClass('hidden');
+    });
+
+    $('#btn-dictionary').click(function () {
+        window.open(DICTIONARY_URL, "", "width=1002,height=700,location=0,menubar=0,scrollbars=1,status=1,resizable=0")
     });
 
     $('.today').html(getDate());
 
     webix.ui({
-				container:"app-calendar",
-				weekHeader:true,
-				view:"calendar",
-				events:webix.Date.isHoliday,
-				timepicker:true,
-                width:240
-			});
+        container: "app-calendar",
+        weekHeader: true,
+        view: "calendar",
+        events: webix.Date.isHoliday,
+        timepicker: true,
+        width: 240
+    });
 
 });
-
 
 
 //gadgets.util.registerOnLoadHandler(init);

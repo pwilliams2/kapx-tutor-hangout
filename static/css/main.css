@@ -29,4 +29,6 @@ body {
     background-repeat: no-repeat;
     background-position: left center;
     padding-left: 13px;
+    padding-top: 5px;
+    margin-top: 15px;
 }
