@@ -24,7 +24,7 @@ var pid = '';
 var studentId = '';
 var tutorName = '';
 var localParticipant;
-var count = 0;
+var participant_count = 0;
 var participants_ = null;
 var subjects_ = '';
 var jsonSubjects_ = null;
@@ -32,57 +32,11 @@ var jsonSubjects_ = null;
 
 // Post a heartbeat to inform host that this tutor H-O is still available
 function heartBeat() {
-    httpRequest('GET', SERVER_PATH, 'heartbeat', 'gid=' + gid + '&pid=' + pid + "&count=" + count);
+    httpRequest('GET', SERVER_PATH, 'heartbeat', 'gid=' + gid + '&pid=' + pid + "&count=" + participant_count);
 }
 
-function httpRequest(method, server, path, params) {
-    console.log('method: ' + method + ' path: ' + path + ' params: ' + params);
 
-    var http = new XMLHttpRequest();
 
-    http.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-            var jsonResponse = JSON.parse(http.responseText);
-        }
-        else {
-            console.log("readyState: " + this.readyState);
-            console.log("status: " + this.status);
-            console.log("statusText: " + http.responseText);
-        }
-    }
-    if (method && method.toUpperCase() == "GET") {
-        //e.g. path == "subscribe", params == gid="gasdfsfsfssdfdsfs"
-        http.open('GET', server + path + '?' + params);
-        http.send();
-    }
-    else if ((method && method.toUpperCase() == "POST")) {
-        http.open('POST', server + path);
-        http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        http.send(params);
-    }
-}
-
-function postSurvey() {
-    console.log('postSurvey');
-    studentId = localParticipant.person.id;
-    payload = 'student_id=' + studentId
-    + '&subjects=' + subjects_
-    + '&tutor_name=' + tutorName
-    + '&student_name=' + localParticipant.person.displayName
-    + '&gid=' + gid
-    + '&knowledge=' + $('#spinknow').val()
-    + '&communications=' + $('#spincomm').val()
-    + '&overall=' + $('#spinall').val()
-    + '&comments=' + $('#comments').val();
-
-    try {
-        $('#clientMessage').html("");
-        httpRequest('POST', SERVER_PATH, 'surveys/data', payload);
-        $('#clientMessage').html("Submitted");
-    } catch (e) {
-        console.log(e);
-    }
-}
 // Publish tutor availability for subject(s)
 function publish(subjects) {
     jsonSubjects_ = subjects[0].subject;  // Used in updateParticipantsUi to display subject
@@ -95,7 +49,7 @@ function publish(subjects) {
         + '&gid=' + gid
         + '&pid=' + pid
         + '&pName=' + localParticipant.person.displayName
-        + '&count=' + count
+        + '&count=' + participant_count
         + '&maxParticipants=' + MAX_COUNT;
 
     try {
@@ -121,7 +75,7 @@ function updateStateUi(state) {
 
 function updateParticipantsUi(participants) {
     console.log('updateParticipants: Participants length == '
-    + participants.length + ' count == ' + count);
+    + participants.length + ' count == ' + participant_count);
 
     participants_ = participants;
     for (i = 0; i < participants.length; i++) {
@@ -131,13 +85,13 @@ function updateParticipantsUi(participants) {
     var arr = hangoutURL.split('/');
     gid = arr[arr.length - 1];
 
-    if (participants.length > 1 && participants.length > count) {//Add
+    if (participants.length > 1 && participants.length > participant_count) {//Add
         var appData = gadgets.views.getParams()['appData'];
         console.log('appData:' + appData);
         console.log('subscribing...');
         console.log('subject: ' + jsonSubjects_);
         $('.subject').html(jsonSubjects_);
-        $('.clientParticipant').html(participants_[1].person.displayName);
+        $('.clientParticipant').html(participants_[participants.length-1].person.displayName);
 
         studentId = participants_[0].person.id;
         httpRequest('POST', SERVER_PATH, 'subscribe',
@@ -148,7 +102,7 @@ function updateParticipantsUi(participants) {
             + '&studentId=' + studentId
             + '&studentName=' + participants_[0].person.displayName);
     }
-    else if (participants.length < count && count > 1) {
+    else if (participants.length < participant_count && participant_count > 1) {
         console.log('unsubscribing...');
         $('.clientParticipant').html("");
 
@@ -158,7 +112,7 @@ function updateParticipantsUi(participants) {
             + '&gid=' + gid
             + '&exit=True');
     }
-    count = participants.length; // Update the count
+    participant_count = participants.length; // Update the count
 }
 
 // A function to be run at app initialization time which registers our callbacks

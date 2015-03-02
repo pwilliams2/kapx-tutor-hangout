@@ -89,3 +89,25 @@ $(function () {
         width: 240
     });
 });
+
+function postSurvey() {
+    console.log('postSurvey');
+    studentId = localParticipant.person.id;
+    payload = 'student_id=' + studentId
+    + '&subjects=' + subjects_
+    + '&tutor_name=' + tutorName
+    + '&student_name=' + localParticipant.person.displayName
+    + '&gid=' + gid
+    + '&knowledge=' + $('#spinknow').val()
+    + '&communications=' + $('#spincomm').val()
+    + '&overall=' + $('#spinall').val()
+    + '&comments=' + $('#comments').val();
+
+    try {
+        $('#clientMessage').html("");
+        httpRequest('POST', SERVER_PATH, 'surveys/data', payload);
+        $('#clientMessage').html("Submitted");
+    } catch (e) {
+        console.log(e);
+    }
+}

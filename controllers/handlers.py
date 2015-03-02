@@ -7,7 +7,6 @@ from google.appengine import runtime
 from google.appengine.ext import ndb
 
 from data import DataHandler
-
 import tutor_hangouts_api as hapi
 from utils import JSONEncoder, autolog, dump_json
 from lib.base import BaseHandler
@@ -16,51 +15,49 @@ from models.models import TutorSubjects, TutorHangoutSessions, TutorArchive
 
 _tutorQueue = deque()  # FIFO q to serve subscribers
 _is_subjects_available = True
+HANGOUTS_URL = 'https://talkgadget.google.com/hangouts/_/'
 
 
 def remove_stale_sessions():
-    """ When a tutor closes their H-O, we need to remove them from the available subjects """
+    """ When a tutor closes their H-O, remove them from the available subjects """
     autolog("remove_stale_sessions")
     now = datetime.datetime.now()
-    del_list = DataHandler.get_tutor_subjects()
+    tutor_list = DataHandler.get_tutor_subjects()
 
-    if del_list and del_list:
-        autolog('del_list')
-        keys = []
-        for tutor in del_list:
-            delta = now - tutor.last_modified
-            if delta.total_seconds() > 60:
-                keys.append(tutor.key)
-                update_tutor_archive(tutor)
+    if tutor_list:
+        del_list = [tutor for tutor in tutor_list
+                    if (now - tutor.last_modified).total_seconds() > 60]  # Tutor heartbeat older than 60s
+        del_keys = [tutor.key for tutor in tutor_list
+                    if (now - tutor.last_modified).total_seconds() > 60]  # Tutor heartbeat older than 60s
 
-        if keys:
-            autolog('deleting tutor keys ' % keys)
-            ndb.delete_multi(keys)
+        ndb.delete_multi(del_keys)
+        update_tutor_archive(del_list)  # Add it to the archive
 
 
-def update_tutor_archive(tutor):
+def update_tutor_archive(tutor_list):
     """ Compute elapsed time online and actual time in session
     :return:
     """
     autolog('updating TutorArchive...')
     elapsed = 0.0
     actual = 0.0
-    tutor_session_list = DataHandler.get_tutor_sessions(tutor.tutor_id)
-    if tutor_session_list:
-        aggregate_session_data(tutor_session_list)
+    for tutor in tutor_list:
+        tutor_session_list = DataHandler.get_tutor_sessions(tutor.tutor_id)
+        if tutor_session_list:
+            aggregate_session_data(tutor_session_list)
 
-    tutor_archive = DataHandler.get_tutor_archive(tutor.tutor_id)
-    if tutor_archive:
-        pass
-    else:
-        tutor_archive = TutorArchive(parent=hapi.TUTOR_ARCHIVE_PARENT_KEY,
-                                     tutor_id=tutor.tutor_id,
-                                     tutor_name=tutor.tutor_name,
-                                     subjects=tutor.subjects,
-                                     elapsed_time=elapsed,
-                                     actual_time=actual
-        )
-        tutor_archive.put()
+        tutor_archive = DataHandler.get_tutor_archive(tutor.tutor_id)
+        if tutor_archive:
+            pass
+        else:
+            tutor_archive = TutorArchive(parent=hapi.TUTOR_ARCHIVE_PARENT_KEY,
+                                         tutor_id=tutor.tutor_id,
+                                         tutor_name=tutor.tutor_name,
+                                         subjects=tutor.subjects,
+                                         elapsed_time=elapsed,
+                                         actual_time=actual
+            )
+            tutor_archive.put()
 
 
 def aggregate_session_data(session_list):
@@ -87,11 +84,11 @@ def assign_available_tutors(subjects_list):
                 current_tutor = _tutorQueue.pop()
 
                 tutor_list = DataHandler.get_tutor_subjects(current_tutor.tutor_id, current_tutor.gid)
+
                 if tutor_list:
                     tutor = tutor_list[0]
-
                     if subject.subject in tutor.subjects and tutor.participants_count < tutor.max_participants:
-                        autolog('Tutor match found for: %s' % subject.subject)
+                        autolog('Tutor match found for: {0}'.format(subject.subject))
                         subject.gid = tutor.gid  # Assign a tutor to the subject
                         subject.is_available = True
                         subject.put()
@@ -106,6 +103,21 @@ def assign_available_tutors(subjects_list):
         raise
 
 
+def get_required_value(some_value, name=None):
+    """ Return valid value or raise and error; use for required values.
+    :param request:
+    :return:
+    """
+    if not some_value and name:
+        autolog("Value: is missing or not valid %s" % name)
+        raise ValueError("Value: %s is missing or not valid" & name)
+    elif not some_value:
+        autolog("Value: is missing or not valid")
+        raise ValueError("Value: %s is missing or not valid")
+    else:
+        return some_value
+
+
 def update_subjects():
     """ Update the subjects table to reflect the availability of the current tutors """
     subjects_list = DataHandler.get_hangout_subjects()
@@ -113,8 +125,8 @@ def update_subjects():
     # Retrieve Available Tutors and their subjects
     if not DataHandler.get_tutor_subjects():  # There are no tutors available
         autolog('No available tutors.')
-        assigned_list = [item for item in subjects_list if item.is_available]
-        for subject in assigned_list:  # Set all subjects to unavailable
+        avail_list = [item for item in subjects_list if item.is_available]
+        for subject in avail_list:  # Set all subjects to unavailable
             autolog('setting subject %s to false' % subject.subject)
             try:
                 subject.is_available = False
@@ -149,13 +161,11 @@ class HangoutRequestHandler(BaseHandler):
     def get(self):
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
 
-        url = 'https://talkgadget.google.com/hangouts/_/'  # gid is appended below at run-time
-        gid = self.request.get('gid')
+        gid = get_required_value(self.request.get('gid'))
         subject = self.request.get('subject')
-        autolog("HangoutRequestHandler url %s, %s, %s" % (url, gid, subject))
-        uri = url + gid + '?gd=' + subject
+        autolog("HangoutRequestHandler url {0}{gid}?gd={subject}".format(HANGOUTS_URL, gid=gid, subject=subject))
 
-        return self.redirect(str(uri))
+        return self.redirect('{0}{gid}?gd={subject}'.format(HANGOUTS_URL, gid=gid, subject=subject))
 
 
 class HeartbeatHandler(BaseHandler):
@@ -166,18 +176,20 @@ class HeartbeatHandler(BaseHandler):
         self.response.headers['Content-Type'] = 'text/plain'
 
         # Search for the specified tutor id == pid
-        ts_list = DataHandler.get_tutor_subjects(self.request.get('pid'))
+        tutor_subjects = DataHandler.get_tutor_subjects(get_required_value(self.request.get('pid'), 'pid'),
+                                                         get_required_value(self.request.get('gid'), 'gid'))
 
-        count = 1
-        if not ts_list:  # hangout is no longer available
-            pass
-        else:  # Found an existing tutor tutor_id, then update the count
-            if self.request.get("count") and isinstance(self.request.get("count"), int):
-                count = self.request.get("count") if self.request.get("count") else 1
+        try:
+            count = int(self.request.get("count"))
+        except ValueError, e:
+            autolog("Invalid count: %s" % str(e))
+            count = 1
 
-        ts_list[0].gid = self.request.get('gid')
-        ts_list[0].participants_count = int(count)
-        ts_list[0].put()
+        if tutor_subjects:
+            tutor_subject = tutor_subjects[0]
+            tutor_subject.gid = self.request.get('gid')
+            tutor_subject.participants_count = count
+            tutor_subject.put()
 
         remove_stale_sessions()  # cleanup closed sessions
         update_subjects()  # Update available subjects
@@ -197,21 +209,19 @@ class PublishHandler(BaseHandler):
         """ Insert/update the subjects for which the tutor is available """
 
         try:
-            tutor = DataHandler.get_tutor_subjects(self.request.get('pid'), self.request.get('gid'))
+            tutor_subjects = DataHandler.get_tutor_subjects(get_required_value(self.request.get('pid'), 'pid'),
+                                                     get_required_value(self.request.get('gid'), 'gid'))
 
             count = int(self.request.get('count')) if self.request.get('count') else 0
             max_participants = int(self.request.get('maxParticipants')) if self.request.get('maxParticipants') else 1
-            inp_subjects = self.request.get('subjects') if self.request.get('subjects') else ''
+            inp_subjects = get_required_value(self.request.get('subjects'), 'subjects')
 
             avail_subjects = []
-            if inp_subjects and isinstance(self.request.get('subjects'), basestring):
-                subjects_list = json.loads(inp_subjects)
-                for tutor_subject in subjects_list:
-                    subject = str(tutor_subject['subject'])
-                    avail_subjects.append(subject)
+            if isinstance(self.request.get('subjects'), basestring):
+                avail_subjects = [str(tutor_subject['subject']) for tutor_subject in json.loads(inp_subjects)]
 
-            if tutor:
-                tutor = tutor[0]
+            if tutor_subjects:
+                tutor = tutor_subjects[0]
                 autolog("Updating tutor subject")
                 tutor.gid = self.request.get('gid')
                 tutor.subjects = avail_subjects
@@ -262,9 +272,10 @@ class SubscribeHandler(BaseHandler):
         """ Subscribe client for H-O session"""
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         autolog("updating tutor hangout session")
-        tutor_id = self.request.get('tutorId')
-        student_id = self.request.get('studentId')
-        gid = self.request.get('gid')
+
+        tutor_id = get_required_value(self.request.get('tutorId'), 'tutor_id')
+        student_id = get_required_value(self.request.get('studentId'), 'student_id')
+        gid = get_required_value(self.request.get('gid'), 'gid')
 
         if self.request.get('exit'):
             """ The session ended, update the session end"""
@@ -292,16 +303,16 @@ class SubscribeHandler(BaseHandler):
 
         else:  # Create new TutorHangoutSession
             autolog("Creating new session")
-            # Get subject from TutorSubjects, cause the client does not have it
+            # Get subject from TutorSubjects cause the client does not have it
             tutor = DataHandler.get_tutor_subjects(None, gid)
             if tutor:
                 session = TutorHangoutSessions(parent=hapi.TUTOR_SESSIONS_PARENT_KEY,
                                                subject=tutor[0].subjects[0],
-                                               tutor_id=self.request.get('tutorId'),
+                                               tutor_id=tutor_id,
                                                tutor_name=self.request.get('tutorName'),
                                                gid=gid,
                                                duration=None,
-                                               participant_id=self.request.get('studentId'),
+                                               participant_id=student_id,
                                                participant_name=self.request.get('studentName')
                 )
                 session_key = session.put()
