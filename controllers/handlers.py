@@ -6,15 +6,14 @@ from google.appengine.runtime.apiproxy_errors import OverQuotaError
 from google.appengine import runtime
 from google.appengine.ext import ndb
 
-from data import DataHandler
+import data
 import tutor_hangouts_api as hapi
 from utils import JSONEncoder, autolog, dump_json
 from lib.base import BaseHandler
-from models.models import TutorSubjects, TutorHangoutSessions, TutorArchive
+from models.models import TutorSubjects, TutorHangoutSessions
 
 
 _tutorQueue = deque()  # FIFO q to serve subscribers
-_is_subjects_available = True
 HANGOUTS_URL = 'https://talkgadget.google.com/hangouts/_/'
 
 
@@ -22,46 +21,16 @@ def remove_stale_sessions():
     """ When a tutor closes their H-O, remove them from the available subjects """
     autolog("remove_stale_sessions")
     now = datetime.datetime.now()
-    tutor_list = DataHandler.get_tutor_subjects()
+    tutor_list = data.DataHandler.get_tutor_subjects()
 
     if tutor_list:
         del_list = [tutor for tutor in tutor_list
-                    if (now - tutor.last_modified).total_seconds() > 60]  # Tutor heartbeat older than 60s
-        del_keys = [tutor.key for tutor in tutor_list
-                    if (now - tutor.last_modified).total_seconds() > 60]  # Tutor heartbeat older than 60s
-
-        ndb.delete_multi(del_keys)
-        update_tutor_archive(del_list)  # Add it to the archive
-
-
-def update_tutor_archive(tutor_list):
-    """ Compute elapsed time online and actual time in session
-    :return:
-    """
-    autolog('updating TutorArchive...')
-    elapsed = 0.0
-    actual = 0.0
-    for tutor in tutor_list:
-        tutor_session_list = DataHandler.get_tutor_sessions(tutor.tutor_id)
-        if tutor_session_list:
-            aggregate_session_data(tutor_session_list)
-
-        tutor_archive = DataHandler.get_tutor_archive(tutor.tutor_id)
-        if tutor_archive:
-            pass
-        else:
-            tutor_archive = TutorArchive(parent=hapi.TUTOR_ARCHIVE_PARENT_KEY,
-                                         tutor_id=tutor.tutor_id,
-                                         tutor_name=tutor.tutor_name,
-                                         subjects=tutor.subjects,
-                                         elapsed_time=elapsed,
-                                         actual_time=actual
-            )
-            tutor_archive.put()
-
-
-def aggregate_session_data(session_list):
-    pass
+                    if (now - tutor.last_modified).total_seconds() > 120]  # Tutor heartbeat older than 60s
+        if del_list:
+            autolog('last_modified age: {0}'.format((now - del_list[0].last_modified).total_seconds()))
+            del_keys = [tutor.key for tutor in del_list]
+            ndb.delete_multi(del_keys)
+            data.DataHandler.update_tutor_archive(del_list)  # Add it to the archive
 
 
 def assign_available_tutors(subjects_list):
@@ -83,7 +52,7 @@ def assign_available_tutors(subjects_list):
                 i += 1
                 current_tutor = _tutorQueue.pop()
 
-                tutor_list = DataHandler.get_tutor_subjects(current_tutor.tutor_id, current_tutor.gid)
+                tutor_list = data.DataHandler.get_tutor_subjects(current_tutor.tutor_id, current_tutor.gid)
 
                 if tutor_list:
                     tutor = tutor_list[0]
@@ -101,42 +70,6 @@ def assign_available_tutors(subjects_list):
     except OverQuotaError, e:
         autolog('Over Quota Error, bypassing for now: %s ' % str(e))
         raise
-
-
-def get_required_value(some_value, name=None):
-    """ Return valid value or raise and error; use for required values.
-    :param request:
-    :return:
-    """
-    if not some_value and name:
-        autolog("Value: is missing or not valid %s" % name)
-        raise ValueError("Value: %s is missing or not valid" & name)
-    elif not some_value:
-        autolog("Value: is missing or not valid")
-        raise ValueError("Value: %s is missing or not valid")
-    else:
-        return some_value
-
-
-def update_subjects():
-    """ Update the subjects table to reflect the availability of the current tutors """
-    subjects_list = DataHandler.get_hangout_subjects()
-
-    # Retrieve Available Tutors and their subjects
-    if not DataHandler.get_tutor_subjects():  # There are no tutors available
-        autolog('No available tutors.')
-        avail_list = [item for item in subjects_list if item.is_available]
-        for subject in avail_list:  # Set all subjects to unavailable
-            autolog('setting subject %s to false' % subject.subject)
-            try:
-                subject.is_available = False
-                subject.gid = None
-                subject.put()
-            except OverQuotaError, e:
-                autolog('Over Quota Error, bypassing for now: ' + str(e))
-    else:
-        autolog('There are avail_tutors.')
-        assign_available_tutors(subjects_list)
 
 
 def remove_tutor_from_queue(tutor_id):
@@ -157,11 +90,32 @@ def remove_tutor_from_queue(tutor_id):
     return False
 
 
+def update_subjects():
+    """ Update the subjects table to reflect the availability of the current tutors """
+    subjects_list = data.DataHandler.get_hangout_subjects()
+
+    # Retrieve Available Tutors and their subjects
+    if data.DataHandler.get_tutor_subjects():  # There are tutors available
+        autolog('There are avail_tutors.')
+        assign_available_tutors(subjects_list)
+    else:
+        autolog('No available tutors.')
+        avail_list = [item for item in subjects_list if item.is_available]
+        for subject in avail_list:  # Set all subjects to unavailable
+            autolog('setting subject %s to false' % subject.subject)
+            try:
+                subject.is_available = False
+                subject.gid = None
+                subject.put()
+            except OverQuotaError, e:
+                autolog('Over Quota Error, bypassing for now: ' + str(e))
+
+
 class HangoutRequestHandler(BaseHandler):
     def get(self):
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
 
-        gid = get_required_value(self.request.get('gid'))
+        gid = self.get_required_value(self.request.get('gid'))
         subject = self.request.get('subject')
         autolog("HangoutRequestHandler url {0}{gid}?gd={subject}".format(HANGOUTS_URL, gid=gid, subject=subject))
 
@@ -176,8 +130,7 @@ class HeartbeatHandler(BaseHandler):
         self.response.headers['Content-Type'] = 'text/plain'
 
         # Search for the specified tutor id == pid
-        tutor_subjects = DataHandler.get_tutor_subjects(get_required_value(self.request.get('pid'), 'pid'),
-                                                         get_required_value(self.request.get('gid'), 'gid'))
+        tutor_subjects = data.DataHandler.get_tutor_subjects(self.get_required_value(self.request.get('gid'), 'gid'))
 
         try:
             count = int(self.request.get("count"))
@@ -209,12 +162,12 @@ class PublishHandler(BaseHandler):
         """ Insert/update the subjects for which the tutor is available """
 
         try:
-            tutor_subjects = DataHandler.get_tutor_subjects(get_required_value(self.request.get('pid'), 'pid'),
-                                                     get_required_value(self.request.get('gid'), 'gid'))
+            tutor_subjects = data.DataHandler.get_tutor_subjects(self.get_required_value(self.request.get('pid'), 'pid'),
+                                                                 self.get_required_value(self.request.get('gid'), 'gid'))
 
             count = int(self.request.get('count')) if self.request.get('count') else 0
             max_participants = int(self.request.get('maxParticipants')) if self.request.get('maxParticipants') else 1
-            inp_subjects = get_required_value(self.request.get('subjects'), 'subjects')
+            inp_subjects = self.get_required_value(self.request.get('subjects'), 'subjects')
 
             avail_subjects = []
             if isinstance(self.request.get('subjects'), basestring):
@@ -255,7 +208,7 @@ class SessionHandler(BaseHandler):
         """ List of sessions      """
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
 
-        ths_list = DataHandler.get_tutor_sessions()
+        ths_list = data.DataHandler.get_tutor_sessions()
         return self.response.out.write(dump_json(ths_list))
 
 
@@ -265,7 +218,7 @@ class SubscribeHandler(BaseHandler):
     def get(self):
         """ Get the list of TutorHangoutSessions """
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
-        ths_list = DataHandler.get_tutor_sessions()
+        ths_list = data.DataHandler.get_tutor_sessions()
         return self.response.out.write(dump_json(ths_list))
 
     def post(self):
@@ -273,21 +226,16 @@ class SubscribeHandler(BaseHandler):
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         autolog("updating tutor hangout session")
 
-        tutor_id = get_required_value(self.request.get('tutorId'), 'tutor_id')
-        student_id = get_required_value(self.request.get('studentId'), 'student_id')
-        gid = get_required_value(self.request.get('gid'), 'gid')
+        tutor_id = self.get_required_value(self.request.get('tutorId'), 'tutorId')
+        student_id = self.get_required_value(self.request.get('studentId'), 'student_id')
+        gid = self.get_required_value(self.request.get('gid'), 'gid')
 
         if self.request.get('exit'):
             """ The session ended, update the session end"""
             autolog("Updating session end")
-            session_list = DataHandler.get_student_active_session(tutor_id, student_id, gid)
+            session_list = data.DataHandler.get_student_active_session(tutor_id, student_id, gid)
 
-            if not session_list:
-                autolog(
-                    'TutorHangoutSession was not found: tutor_id {%s}, gid{%s}, student_id{%s}' % (
-                        tutor_id, gid, student_id))
-                self.response.set_status(204, "No session found for criteria.")
-            else:
+            if session_list:
                 session = session_list[0]
                 now = datetime.datetime.now()
                 delta = now - session.start
@@ -296,15 +244,20 @@ class SubscribeHandler(BaseHandler):
                 session_key = session.put()
                 self.response.out.write(session_key.urlsafe())
 
-                tutor = DataHandler.get_tutor_subjects(tutor_id)
+                tutor = data.DataHandler.get_tutor_subjects(tutor_id)
                 # Add tutor back to queue
                 if tutor:
                     _tutorQueue.appendleft(tutor[0])
+            else:
+                autolog(
+                    'TutorHangoutSession was not found: tutor_id {%s}, gid{%s}, student_id{%s}' % (
+                        tutor_id, gid, student_id))
+                self.response.set_status(204, "No session found for criteria.")
 
         else:  # Create new TutorHangoutSession
             autolog("Creating new session")
             # Get subject from TutorSubjects cause the client does not have it
-            tutor = DataHandler.get_tutor_subjects(None, gid)
+            tutor = data.DataHandler.get_tutor_subjects(tutor_id, gid)
             if tutor:
                 session = TutorHangoutSessions(parent=hapi.TUTOR_SESSIONS_PARENT_KEY,
                                                subject=tutor[0].subjects[0],
@@ -330,7 +283,7 @@ class SubjectsHandler(BaseHandler):
         update_subjects()
 
         try:
-            subjects = DataHandler.get_hangout_subjects()
+            subjects = data.DataHandler.get_hangout_subjects()
 
             if subjects:
                 return self.response.out.write(JSONEncoder().encode(subjects))

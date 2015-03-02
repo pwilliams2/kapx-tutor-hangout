@@ -3,6 +3,7 @@ from google.appengine.ext import ndb
 import tutor_hangouts_api as hapi
 from lib.base import BaseHandler
 from models.models import TutorSubjects, TutorHangoutSessions, HangoutSubjects, TutorArchive
+from utils import autolog
 
 
 class DataHandler(BaseHandler):
@@ -76,5 +77,36 @@ class DataHandler(BaseHandler):
             return TutorArchive.query(ancestor=hapi.TUTOR_ARCHIVE_PARENT_KEY).filter(
                 TutorArchive.tutor_id == tutor_id)
         else:
-            return TutorArchive.query(ancestor=hapi.TUTOR_ARCHIVE_PARENT_KEY).order(-TutorArchive.last_modified).fetch(100)
+            return TutorArchive.query(ancestor=hapi.TUTOR_ARCHIVE_PARENT_KEY).order(-TutorArchive.last_modified).fetch(
+                100)
 
+    @staticmethod
+    def aggregate_session_data(session_list):
+        pass
+
+
+    @staticmethod
+    def update_tutor_archive(tutor_list):
+        """ Compute elapsed time online and actual time in session
+        :return:
+        """
+        autolog('updating TutorArchive...')
+        elapsed = 0.0
+        actual = 0.0
+        for tutor in tutor_list:
+            tutor_session_list = DataHandler.get_tutor_sessions(tutor.tutor_id)
+            if tutor_session_list:
+                DataHandler.aggregate_session_data(tutor_session_list)
+
+            tutor_archive = DataHandler.get_tutor_archive(tutor.tutor_id)
+            if tutor_archive:
+                pass
+            else:
+                tutor_archive = TutorArchive(parent=hapi.TUTOR_ARCHIVE_PARENT_KEY,
+                                             tutor_id=tutor.tutor_id,
+                                             tutor_name=tutor.tutor_name,
+                                             subjects=tutor.subjects,
+                                             elapsed_time=elapsed,
+                                             actual_time=actual
+                )
+                tutor_archive.put()

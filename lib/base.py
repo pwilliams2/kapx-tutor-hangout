@@ -12,6 +12,7 @@ import config
 
 jinja_environment = jinja2.Environment(loader=jinja2.FileSystemLoader(config.base_path))
 
+
 class BaseHandler(webapp2.RequestHandler):
 
     def jinja2(self):
@@ -30,3 +31,17 @@ class BaseHandler(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = mime_type
         template = jinja_environment.get_template(template_file)
         self.response.out.write(template.render(**template_data))
+
+    def get_required_value(some_value, name=None):
+        """ Return valid value or raise and error; use for required values.
+        :param request:
+        :return:
+        """
+        if not some_value and name:
+            # autolog("Value: is missing or not valid %s" % name)
+            raise ValueError("Value: %s is missing or not valid" % name)
+        elif not some_value:
+            # autolog("Value: is missing or not valid")
+            raise ValueError("Value: is missing or not valid")
+        else:
+            return some_value
