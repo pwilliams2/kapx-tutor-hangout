@@ -51,7 +51,6 @@ def assign_available_tutors(subjects_list):
             while _tutorQueue and i < size:
                 i += 1
                 current_tutor = _tutorQueue.pop()
-
                 tutor_list = data.DataHandler.get_tutor_subjects(current_tutor.tutor_id, current_tutor.gid)
 
                 if tutor_list:
@@ -129,20 +128,23 @@ class HeartbeatHandler(BaseHandler):
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
         self.response.headers['Content-Type'] = 'text/plain'
 
-        # Search for the specified tutor id == pid
-        tutor_subjects = data.DataHandler.get_tutor_subjects(self.get_required_value(self.request.get('gid'), 'gid'))
-
         try:
             count = int(self.request.get("count"))
         except ValueError, e:
             autolog("Invalid count: %s" % str(e))
             count = 1
 
-        if tutor_subjects:
-            tutor_subject = tutor_subjects[0]
-            tutor_subject.gid = self.request.get('gid')
-            tutor_subject.participants_count = count
-            tutor_subject.put()
+        try:
+            # Search for the specified tutor id == pid
+            tutor_subjects = data.DataHandler.get_tutor_subjects(self.get_required_value(self.request.get('gid')))
+        except ValueError, e:
+            autolog(e)
+        else:
+            if tutor_subjects:
+                tutor_subject = tutor_subjects[0]
+                tutor_subject.gid = self.request.get('gid')
+                tutor_subject.participants_count = count
+                tutor_subject.put()
 
         remove_stale_sessions()  # cleanup closed sessions
         update_subjects()  # Update available subjects
@@ -162,8 +164,9 @@ class PublishHandler(BaseHandler):
         """ Insert/update the subjects for which the tutor is available """
 
         try:
-            tutor_subjects = data.DataHandler.get_tutor_subjects(self.get_required_value(self.request.get('pid'), 'pid'),
-                                                                 self.get_required_value(self.request.get('gid'), 'gid'))
+            tutor_subjects = data.DataHandler.get_tutor_subjects(
+                self.get_required_value(self.request.get('pid'), 'pid'),
+                self.get_required_value(self.request.get('gid'), 'gid'))
 
             count = int(self.request.get('count')) if self.request.get('count') else 0
             max_participants = int(self.request.get('maxParticipants')) if self.request.get('maxParticipants') else 1
@@ -224,55 +227,67 @@ class SubscribeHandler(BaseHandler):
     def post(self):
         """ Subscribe client for H-O session"""
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
-        autolog("updating tutor hangout session")
 
+        try:
+            if self.request.get('exit'):  # The session ended, update the session end
+                self.exit_session()
+
+            else:  # Create new TutorHangoutSession
+                autolog("updating tutor hangout session")
+                tutor_id = self.get_required_value(self.request.get('tutorId'), 'tutorId')
+                student_id = self.get_required_value(self.request.get('studentId'), 'student_id')
+                gid = self.get_required_value(self.request.get('gid'), 'gid')
+
+                autolog("Creating new session")
+                # Get subject from TutorSubjects cause the client does not have it
+                tutor_list = data.DataHandler.get_tutor_subjects(tutor_id, gid)
+                if tutor_list:
+                    session = TutorHangoutSessions(parent=hapi.TUTOR_SESSIONS_PARENT_KEY,
+                                                   subject=tutor_list[0].subjects[0],
+                                                   tutor_id=tutor_id,
+                                                   tutor_name=self.request.get('tutorName'),
+                                                   gid=gid,
+                                                   duration=None,
+                                                   participant_id=student_id,
+                                                   participant_name=self.request.get('studentName')
+                    )
+                    session_key = session.put()
+                    remove_tutor_from_queue(tutor_list[0].tutor_id)
+                    self.response.out.write(session_key.urlsafe())
+                else:
+                    autolog('No TutorSubjects; can not create a Hangout Session row.')
+        except ValueError, e:
+            autolog(e)
+
+    def exit_session(self):
+        """
+        :return:
+        """
+        autolog("Exiting the session...")
         tutor_id = self.get_required_value(self.request.get('tutorId'), 'tutorId')
         student_id = self.get_required_value(self.request.get('studentId'), 'student_id')
         gid = self.get_required_value(self.request.get('gid'), 'gid')
 
-        if self.request.get('exit'):
-            """ The session ended, update the session end"""
-            autolog("Updating session end")
-            session_list = data.DataHandler.get_student_active_session(tutor_id, student_id, gid)
+        session_list = data.DataHandler.get_student_active_session(tutor_id, student_id, gid)
 
-            if session_list:
-                session = session_list[0]
-                now = datetime.datetime.now()
-                delta = now - session.start
-                session.end = now
-                session.duration = delta.total_seconds() / 60  # convert to minutes
-                session_key = session.put()
-                self.response.out.write(session_key.urlsafe())
+        if session_list:
+            session = session_list[0]
+            now = datetime.datetime.now()
+            delta = now - session.start
+            session.end = now
+            session.duration = delta.total_seconds() / 60  # convert to minutes
+            session_key = session.put()
+            self.response.out.write(session_key.urlsafe())
 
-                tutor = data.DataHandler.get_tutor_subjects(tutor_id)
-                # Add tutor back to queue
-                if tutor:
-                    _tutorQueue.appendleft(tutor[0])
-            else:
-                autolog(
-                    'TutorHangoutSession was not found: tutor_id {%s}, gid{%s}, student_id{%s}' % (
-                        tutor_id, gid, student_id))
-                self.response.set_status(204, "No session found for criteria.")
-
-        else:  # Create new TutorHangoutSession
-            autolog("Creating new session")
-            # Get subject from TutorSubjects cause the client does not have it
-            tutor = data.DataHandler.get_tutor_subjects(tutor_id, gid)
-            if tutor:
-                session = TutorHangoutSessions(parent=hapi.TUTOR_SESSIONS_PARENT_KEY,
-                                               subject=tutor[0].subjects[0],
-                                               tutor_id=tutor_id,
-                                               tutor_name=self.request.get('tutorName'),
-                                               gid=gid,
-                                               duration=None,
-                                               participant_id=student_id,
-                                               participant_name=self.request.get('studentName')
-                )
-                session_key = session.put()
-                remove_tutor_from_queue(tutor[0].tutor_id)
-                self.response.out.write(session_key.urlsafe())
-            else:
-                autolog('No TutorSubjects; can not create a Hangout Session row.')
+            tutor_list = data.DataHandler.get_tutor_subjects(tutor_id)
+            # Add tutor back to queue
+            if tutor_list:
+                _tutorQueue.appendleft(tutor_list[0])
+        else:
+            autolog(
+                'TutorHangoutSession was not found: tutor_id {%s}, gid{%s}, student_id{%s}' % (
+                    tutor_id, gid, student_id))
+            self.response.set_status(204, "No session found for criteria.")
 
 
 class SubjectsHandler(BaseHandler):
@@ -290,7 +305,7 @@ class SubjectsHandler(BaseHandler):
             else:
                 self.response.set_status(204, 'No subjects found')
                 autolog("no subjects found")
-                return None
+                return []
         except runtime.DeadlineExceededError, e:
             autolog('Deadline Exceed Error: ' + str(e))
-            return None
+            return []
