@@ -31,11 +31,12 @@ class BaseHandler(webapp2.RequestHandler):
         template = jinja_environment.get_template(template_file)
         self.response.out.write(template.render(**template_data))
 
-    def get_required_value(some_value, some_name=None):
+    def get_required_value(self, some_value, some_name=None):
         """ Return valid value or raise and error; use for required values.
         :param request:
         :return:
         """
+
         if not some_value and some_name:
             utils.autolog("Value: is missing or not valid %s" % some_name)
             raise ValueError("Value: %s is missing or not valid" % some_name)

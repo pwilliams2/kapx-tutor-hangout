@@ -56,6 +56,12 @@ indexes:
   properties:
   - name: create_date
 
+- kind: TutorSubjects
+  ancestor: yes
+  properties:
+  - name: last_modified
+    direction: desc
+
 - kind: TutorSurveys
   ancestor: yes
   properties:

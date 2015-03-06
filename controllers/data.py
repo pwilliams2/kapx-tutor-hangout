@@ -57,7 +57,8 @@ class DataHandler(BaseHandler):
             return TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
                 TutorSubjects.gid == gid).fetch(1)
         else:
-            return TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).fetch()
+            return TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).order(
+                -TutorSubjects.last_modified).fetch()
 
 
     @staticmethod

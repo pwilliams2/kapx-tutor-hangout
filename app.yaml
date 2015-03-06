@@ -26,6 +26,10 @@ handlers:
   static_files: views/tutor.html
   upload: views/tutor\.html
 
+- url: /tutor_secure
+  static_files: views/tutor_s.html
+  upload: views/tutor\.html
+
 - url: /fonts
   static_dir: static/fonts
 

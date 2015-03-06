@@ -136,19 +136,23 @@ class HeartbeatHandler(BaseHandler):
 
         try:
             # Search for the specified tutor id == pid
-            tutor_subjects = data.DataHandler.get_tutor_subjects(self.get_required_value(self.request.get('gid')))
-        except ValueError, e:
-            autolog(e)
-        else:
+            tutor_subjects = data.DataHandler.get_tutor_subjects(
+                self.get_required_value(self.request.get('gid'), 'gid'))
+
             if tutor_subjects:
                 tutor_subject = tutor_subjects[0]
                 tutor_subject.gid = self.request.get('gid')
                 tutor_subject.participants_count = count
                 tutor_subject.put()
+                autolog('last_modified {0}'.format(tutor_subject.last_modified))
+                self.response.set_status(200, 'ok')
+
+        except ValueError, e:
+            autolog(e)
+            self.response.set_status(500, str(e))
 
         remove_stale_sessions()  # cleanup closed sessions
         update_subjects()  # Update available subjects
-        self.response.set_status(200, 'ok')
 
 
 class PublishHandler(BaseHandler):
@@ -165,8 +169,9 @@ class PublishHandler(BaseHandler):
 
         try:
             tutor_subjects = data.DataHandler.get_tutor_subjects(
-                self.get_required_value(self.request.get('pid'), 'pid'),
-                self.get_required_value(self.request.get('gid'), 'gid'))
+                self.get_required_value(self.request.get('pid')),
+                self.get_required_value(self.request.get('gid'))
+            )
 
             count = int(self.request.get('count')) if self.request.get('count') else 0
             max_participants = int(self.request.get('maxParticipants')) if self.request.get('maxParticipants') else 1
@@ -235,8 +240,8 @@ class SubscribeHandler(BaseHandler):
             else:  # Create new TutorHangoutSession
                 autolog("updating tutor hangout session")
                 tutor_id = self.get_required_value(self.request.get('tutorId'), 'tutorId')
-                student_id = self.get_required_value(self.request.get('studentId'), 'student_id')
-                gid = self.get_required_value(self.request.get('gid'), 'gid')
+                student_id = self.get_required_value(self.request.get('studentId'), 'studentId')
+                gid = self.get_required_value(self.request.get('gid'))
 
                 autolog("Creating new session")
                 # Get subject from TutorSubjects cause the client does not have it
@@ -264,9 +269,9 @@ class SubscribeHandler(BaseHandler):
         :return:
         """
         autolog("Exiting the session...")
-        tutor_id = self.get_required_value(self.request.get('tutorId'), 'tutorId')
-        student_id = self.get_required_value(self.request.get('studentId'), 'student_id')
-        gid = self.get_required_value(self.request.get('gid'), 'gid')
+        tutor_id = self.get_required_value(self.request.get('tutorId'))
+        student_id = self.get_required_value(self.request.get('studentId'))
+        gid = self.get_required_value(self.request.get('gid'))
 
         session_list = data.DataHandler.get_student_active_session(tutor_id, student_id, gid)
 
