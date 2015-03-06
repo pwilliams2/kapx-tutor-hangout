@@ -1,13 +1,12 @@
 import logging
-import os
-import webapp2
-import jinja2
-
 from urlparse import urlparse
 
+import webapp2
+import jinja2
 from google.appengine.api.app_identity import get_application_id
 
 import config
+import utils
 
 
 jinja_environment = jinja2.Environment(loader=jinja2.FileSystemLoader(config.base_path))
@@ -32,16 +31,16 @@ class BaseHandler(webapp2.RequestHandler):
         template = jinja_environment.get_template(template_file)
         self.response.out.write(template.render(**template_data))
 
-    def get_required_value(some_value, name=None):
+    def get_required_value(some_value, some_name=None):
         """ Return valid value or raise and error; use for required values.
         :param request:
         :return:
         """
-        if not some_value and name:
-            # autolog("Value: is missing or not valid %s" % name)
-            raise ValueError("Value: %s is missing or not valid" % name)
+        if not some_value and some_name:
+            utils.autolog("Value: is missing or not valid %s" % some_name)
+            raise ValueError("Value: %s is missing or not valid" % some_name)
         elif not some_value:
-            # autolog("Value: is missing or not valid")
+            utils.autolog("Value: is missing or not valid")
             raise ValueError("Value: is missing or not valid")
         else:
             return some_value
