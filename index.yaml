@@ -51,16 +51,33 @@ indexes:
   - name: gid
     direction: desc
 
-- kind: TutorSurveys
-  ancestor: yes
-  properties:
-  - name: create_date
 
 - kind: TutorSubjects
   ancestor: yes
   properties:
   - name: last_modified
     direction: desc
+
+- kind: TutorSubjects
+  ancestor: yes
+  properties:
+  - name: gid
+
+- kind: TutorSubjects
+  ancestor: yes
+  properties:
+  - name: tutor_id
+  - name: gid
+
+- kind: TutorSubjects
+  ancestor: yes
+  properties:
+  - name: tutor_id
+
+- kind: TutorSurveys
+  ancestor: yes
+  properties:
+  - name: create_date
 
 - kind: TutorSurveys
   ancestor: yes

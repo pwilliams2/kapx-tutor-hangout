@@ -126,7 +126,6 @@ class HeartbeatHandler(BaseHandler):
 
     def get(self):
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
-        self.response.headers['Content-Type'] = 'text/plain'
 
         try:
             count = int(self.request.get("count"))
@@ -135,9 +134,10 @@ class HeartbeatHandler(BaseHandler):
             count = 1
 
         try:
-            # Search for the specified tutor id == pid
             tutor_subjects = data.DataHandler.get_tutor_subjects(
-                self.get_required_value(self.request.get('gid'), 'gid'))
+                self.get_required_value(self.request.get('pid')),
+                self.get_required_value(self.request.get('gid'))
+            )
 
             if tutor_subjects:
                 tutor_subject = tutor_subjects[0]
