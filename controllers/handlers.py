@@ -111,6 +111,7 @@ def update_subjects():
 
 
 class HangoutRequestHandler(BaseHandler):
+    """ Launch the student H-O """
     def get(self):
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
 
@@ -149,7 +150,7 @@ class HeartbeatHandler(BaseHandler):
 
         except ValueError, e:
             autolog(e)
-            self.response.set_status(500, str(e))
+            self.response.set_status(500, e.message)
 
         remove_stale_sessions()  # cleanup closed sessions
         update_subjects()  # Update available subjects
@@ -208,7 +209,7 @@ class PublishHandler(BaseHandler):
                 _tutorQueue.appendleft(tutor)
             self.response.out.write(ts_key.urlsafe())
         except Exception, e:
-            autolog('msg: ' + str(e))
+            autolog('msg: ' + e.message)
 
 
 class SessionHandler(BaseHandler):
@@ -262,7 +263,7 @@ class SubscribeHandler(BaseHandler):
                 else:
                     autolog('No TutorSubjects; can not create a Hangout Session row.')
         except ValueError, e:
-            autolog(e)
+            autolog(e.message)
 
     def exit_session(self):
         """
@@ -312,5 +313,5 @@ class SubjectsHandler(BaseHandler):
                 autolog("no subjects found")
                 return []
         except runtime.DeadlineExceededError, e:
-            autolog('Deadline Exceed Error: ' + str(e))
+            autolog('Deadline Exceed Error: {0}'.format(e.message))
             return []
