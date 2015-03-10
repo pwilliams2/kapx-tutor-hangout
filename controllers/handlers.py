@@ -34,7 +34,7 @@ def remove_stale_sessions():
 
 
 def assign_available_tutors(subjects_list):
-    """ Assign the tutors in the avail_tutors_list to the subjects in the subjects_list
+    """ Assign the tutors in the avail_tutors_list to the subjects in the subjects_list displayed to clients
     :param subjects_list: the tutored subjects
     :return:
     """
@@ -43,9 +43,10 @@ def assign_available_tutors(subjects_list):
         autolog('_tutorQueue size %s' % str(len(_tutorQueue)))
 
         size = len(_tutorQueue)
-        for subject in subjects_list:  # Get next an available tutor in q
+        for subject in subjects_list:  # Get next available tutor in q
             i = 0
             subject.is_available = False
+            subject.is_busy = False
             subject.gid = ''
 
             while _tutorQueue and i < size:
@@ -67,7 +68,7 @@ def assign_available_tutors(subjects_list):
             subject.put()
         return True
     except OverQuotaError, e:
-        autolog('Over Quota Error, bypassing for now: %s ' % str(e))
+        autolog('Over Quota Error, bypassing for now: %s ' % e.message)
         raise
 
 
@@ -92,11 +93,15 @@ def remove_tutor_from_queue(tutor_id):
 def update_subjects():
     """ Update the subjects table to reflect the availability of the current tutors """
     subjects_list = data.DataHandler.get_hangout_subjects()
+    tutor_list = data.DataHandler.get_tutor_subjects()
 
     # Retrieve Available Tutors and their subjects
-    if data.DataHandler.get_tutor_subjects():  # There are tutors available
+    if tutor_list:  # There are tutors available
         autolog('There are avail_tutors.')
-        assign_available_tutors(subjects_list)
+        if subjects_list:
+            assign_available_tutors(subjects_list)
+            update_subject_busy_flag()
+
     else:
         autolog('No available tutors.')
         avail_list = [item for item in subjects_list if item.is_available]
@@ -104,21 +109,48 @@ def update_subjects():
             autolog('setting subject %s to false' % subject.subject)
             try:
                 subject.is_available = False
+                subject.is_busy = False
                 subject.gid = None
                 subject.put()
             except OverQuotaError, e:
-                autolog('Over Quota Error, bypassing for now: ' + str(e))
+                autolog('Over Quota Error, bypassing for now: ' + e.message)
+
+
+def update_subject_busy_flag():
+    """ There are two subject states:
+     1) Not Available: There are no tutors online for that subject
+     2) Busy: One or more tutors for a subject are online, but none are available, i.e., they're currently in a session
+     Check if all available tutor(s) are in session for subject, if so, set the subject.is_busy to True
+    :return:
+    """
+
+    try:
+        subjects_list = data.DataHandler.get_hangout_subjects()
+        tutor_subjects_list = data.DataHandler.get_tutor_subjects()
+        for subject in subjects_list:
+            tutor_list = [tutor_subject for tutor_subject in tutor_subjects_list if
+                          subject.subject in tutor_subject.subjects]  # All tutors for subject
+
+            if tutor_list:  # See if all tutors are already in a session
+                active_session_list = [tutor_subject for tutor_subject in tutor_list
+                                       if data.DataHandler.get_tutor_active_session(tutor_subject.tutor_id)]
+                if len(active_session_list) == len(tutor_list):  # All tutors for subject are in session
+                    subject.is_busy = True
+                    subject.put()
+
+    except Exception, e:
+        autolog(e.message)
 
 
 class HangoutRequestHandler(BaseHandler):
     """ Launch the student H-O """
+
     def get(self):
         self.response.headers.add_header("Access-Control-Allow-Origin", "*")
-
         gid = self.get_required_value(self.request.get('gid'))
-        subject = self.request.get('subject')
-        autolog("HangoutRequestHandler url {0}{gid}?gd={subject}".format(HANGOUTS_URL, gid=gid, subject=subject))
+        subject = self.get_required_value(self.request.get('subject'))
 
+        autolog("HangoutRequestHandler url {0}{gid}?gd={subject}".format(HANGOUTS_URL, gid=gid, subject=subject))
         return self.redirect('{0}{gid}?gd={subject}'.format(HANGOUTS_URL, gid=gid, subject=subject))
 
 
@@ -247,6 +279,7 @@ class SubscribeHandler(BaseHandler):
                 autolog("Creating new session")
                 # Get subject from TutorSubjects cause the client does not have it
                 tutor_list = data.DataHandler.get_tutor_subjects(tutor_id, gid)
+
                 if tutor_list:
                     session = TutorHangoutSessions(parent=hapi.TUTOR_SESSIONS_PARENT_KEY,
                                                    subject=tutor_list[0].subjects[0],
@@ -260,6 +293,7 @@ class SubscribeHandler(BaseHandler):
                     session_key = session.put()
                     remove_tutor_from_queue(tutor_list[0].tutor_id)
                     self.response.out.write(session_key.urlsafe())
+
                 else:
                     autolog('No TutorSubjects; can not create a Hangout Session row.')
         except ValueError, e:
@@ -274,7 +308,7 @@ class SubscribeHandler(BaseHandler):
         student_id = self.get_required_value(self.request.get('studentId'))
         gid = self.get_required_value(self.request.get('gid'))
 
-        session_list = data.DataHandler.get_student_active_session(tutor_id, student_id, gid)
+        session_list = data.DataHandler.get_tutor_active_session(tutor_id, student_id, gid)
 
         if session_list:
             session = session_list[0]
@@ -315,3 +349,4 @@ class SubjectsHandler(BaseHandler):
         except runtime.DeadlineExceededError, e:
             autolog('Deadline Exceed Error: {0}'.format(e.message))
             return []
+
