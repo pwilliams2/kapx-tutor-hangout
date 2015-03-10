@@ -10,7 +10,7 @@ class DataHandler(BaseHandler):
     """ Data operations """
 
     @staticmethod
-    def get_tutor_active_session(tutor_id=None, student_id=None, gid=None):
+    def get_active_sessions(tutor_id=None, student_id=None, gid=None):
         """
         :param tutor_id:
         :param student_id:
@@ -22,25 +22,24 @@ class DataHandler(BaseHandler):
                 TutorHangoutSessions.tutor_id == tutor_id,
                 TutorHangoutSessions.participant_id == student_id,
                 TutorHangoutSessions.gid == gid,
-                TutorHangoutSessions.duration <= 0.0)).fetch(1)
+                TutorHangoutSessions.is_active == True)).get()
         elif tutor_id and student_id:
             return TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(ndb.AND(
                 TutorHangoutSessions.tutor_id == tutor_id,
                 TutorHangoutSessions.participant_id == student_id,
-                TutorHangoutSessions.duration <= 0.0)).fetch(1)
+                TutorHangoutSessions.is_active == True)).get()
         elif tutor_id and gid:
             return TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(ndb.AND(
                 TutorHangoutSessions.tutor_id == tutor_id,
                 TutorHangoutSessions.gid == gid,
-                TutorHangoutSessions.duration <= 0.0)).fetch(1)
+                TutorHangoutSessions.is_active == True)).get()
         elif tutor_id:
             return TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(ndb.AND(
                 TutorHangoutSessions.tutor_id == tutor_id,
-                TutorHangoutSessions.duration <= 0.0)).fetch(1)
+                TutorHangoutSessions.is_active == True)).get()
         else:
             return TutorHangoutSessions.query(ancestor=hapi.TUTOR_SESSIONS_PARENT_KEY).filter(
-                TutorHangoutSessions.duration <= 0.0).fetch(1)
-
+                TutorHangoutSessions.is_active == True).fetch()
 
 
     @staticmethod
@@ -66,13 +65,13 @@ class DataHandler(BaseHandler):
 
         if tutor_id and gid:
             return TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
-                ndb.AND(TutorSubjects.tutor_id == tutor_id, TutorSubjects.gid == gid)).fetch(1)
+                ndb.AND(TutorSubjects.tutor_id == tutor_id, TutorSubjects.gid == gid)).get()
         elif tutor_id:
             return TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
-                TutorSubjects.tutor_id == tutor_id).fetch(1)
+                TutorSubjects.tutor_id == tutor_id).get()
         elif gid:
             return TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).filter(
-                TutorSubjects.gid == gid).fetch(1)
+                TutorSubjects.gid == gid).get()
         else:
             return TutorSubjects.query(ancestor=hapi.TUTOR_SUBJECTS_PARENT_KEY).order(
                 -TutorSubjects.last_modified).fetch()

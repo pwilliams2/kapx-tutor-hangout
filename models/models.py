@@ -20,8 +20,8 @@ class TutorSubjects(EndpointsModel):
 
 class TutorHangoutSessions(EndpointsModel):
     _message_fields_schema = (
-        'entityKey', 'tutor_id', 'subject', 'gid', 'tutor_name', 'participant_id', 'participant_name', 'start', 'end',
-        'duration', 'survey_key')
+        'entityKey', 'tutor_id', 'subject', 'gid', 'tutor_name', 'participant_id', 'participant_name',
+        'start', 'end','duration', 'survey_key', 'is_active')
     tutor_id = ndb.StringProperty()  # participant.person.id
     subject = ndb.StringProperty()
     gid = ndb.StringProperty()
@@ -30,8 +30,9 @@ class TutorHangoutSessions(EndpointsModel):
     participant_name = ndb.StringProperty()
     start = ndb.DateTimeProperty(auto_now_add=True)
     end = ndb.DateTimeProperty()
-    duration = ndb.FloatProperty()   # Minutes
+    duration = ndb.FloatProperty(default=0.0)   # Minutes
     survey_key = ndb.StringProperty()
+    is_active = ndb.BooleanProperty(default=False)
 
 
 class HangoutSubjects(EndpointsModel):

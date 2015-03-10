@@ -21,6 +21,16 @@ indexes:
   - name: tutor_name
 
 - kind: TutorHangoutSessions
+  properties:
+  - name: tutor_id
+  - name: duration
+
+- kind: TutorHangoutSessions
+  properties:
+  - name: tutor_id
+  - name: is_active
+
+- kind: TutorHangoutSessions
   ancestor: yes
   properties:
   - name: gid

@@ -52,10 +52,9 @@ def assign_available_tutors(subjects_list):
             while _tutorQueue and i < size:
                 i += 1
                 current_tutor = _tutorQueue.pop()
-                tutor_list = data.DataHandler.get_tutor_subjects(current_tutor.tutor_id, current_tutor.gid)
+                tutor = data.DataHandler.get_tutor_subjects(current_tutor.tutor_id, current_tutor.gid)
 
-                if tutor_list:
-                    tutor = tutor_list[0]
+                if tutor:
                     if subject.subject in tutor.subjects and tutor.participants_count < tutor.max_participants:
                         autolog('Tutor match found for: {0}'.format(subject.subject))
                         subject.gid = tutor.gid  # Assign a tutor to the subject
@@ -133,7 +132,7 @@ def update_subject_busy_flag():
 
             if tutor_list:  # See if all tutors are already in a session
                 active_session_list = [tutor_subject for tutor_subject in tutor_list
-                                       if data.DataHandler.get_tutor_active_session(tutor_subject.tutor_id)]
+                                       if data.DataHandler.get_active_sessions(tutor_subject.tutor_id)]
                 if len(active_session_list) == len(tutor_list):  # All tutors for subject are in session
                     subject.is_busy = True
                     subject.put()
@@ -167,13 +166,12 @@ class HeartbeatHandler(BaseHandler):
             count = 1
 
         try:
-            tutor_subjects = data.DataHandler.get_tutor_subjects(
+            tutor_subject = data.DataHandler.get_tutor_subjects(
                 self.get_required_value(self.request.get('pid')),
                 self.get_required_value(self.request.get('gid'))
             )
 
-            if tutor_subjects:
-                tutor_subject = tutor_subjects[0]
+            if tutor_subject:
                 tutor_subject.gid = self.request.get('gid')
                 tutor_subject.participants_count = count
                 tutor_subject.put()
@@ -201,7 +199,7 @@ class PublishHandler(BaseHandler):
         """ Insert/update the subjects for which the tutor is available """
 
         try:
-            tutor_subjects = data.DataHandler.get_tutor_subjects(
+            tutor = data.DataHandler.get_tutor_subjects(
                 self.get_required_value(self.request.get('pid')),
                 self.get_required_value(self.request.get('gid'))
             )
@@ -214,8 +212,7 @@ class PublishHandler(BaseHandler):
             if isinstance(self.request.get('subjects'), basestring):
                 avail_subjects = [str(tutor_subject['subject']) for tutor_subject in json.loads(inp_subjects)]
 
-            if tutor_subjects:
-                tutor = tutor_subjects[0]
+            if tutor:
                 autolog("Updating tutor subject")
                 tutor.gid = self.request.get('gid')
                 tutor.subjects = avail_subjects
@@ -278,20 +275,21 @@ class SubscribeHandler(BaseHandler):
 
                 autolog("Creating new session")
                 # Get subject from TutorSubjects cause the client does not have it
-                tutor_list = data.DataHandler.get_tutor_subjects(tutor_id, gid)
+                tutor = data.DataHandler.get_tutor_subjects(tutor_id, gid)
 
-                if tutor_list:
+                if tutor:
                     session = TutorHangoutSessions(parent=hapi.TUTOR_SESSIONS_PARENT_KEY,
-                                                   subject=tutor_list[0].subjects[0],
+                                                   subject=tutor.subjects[0],
                                                    tutor_id=tutor_id,
                                                    tutor_name=self.request.get('tutorName'),
                                                    gid=gid,
                                                    duration=None,
                                                    participant_id=student_id,
-                                                   participant_name=self.request.get('studentName')
+                                                   participant_name=self.request.get('studentName'),
+                                                   is_active = True
                     )
                     session_key = session.put()
-                    remove_tutor_from_queue(tutor_list[0].tutor_id)
+                    remove_tutor_from_queue(tutor.tutor_id)
                     self.response.out.write(session_key.urlsafe())
 
                 else:
@@ -308,21 +306,21 @@ class SubscribeHandler(BaseHandler):
         student_id = self.get_required_value(self.request.get('studentId'))
         gid = self.get_required_value(self.request.get('gid'))
 
-        session_list = data.DataHandler.get_tutor_active_session(tutor_id, student_id, gid)
+        session = data.DataHandler.get_active_sessions(tutor_id, student_id, gid)
 
-        if session_list:
-            session = session_list[0]
+        if session:
             now = datetime.datetime.now()
             delta = now - session.start
             session.end = now
             session.duration = delta.total_seconds() / 60  # convert to minutes
+            session.is_active = False
             session_key = session.put()
             self.response.out.write(session_key.urlsafe())
 
-            tutor_list = data.DataHandler.get_tutor_subjects(tutor_id)
+            tutor = data.DataHandler.get_tutor_subjects(tutor_id)
             # Add tutor back to queue
-            if tutor_list:
-                _tutorQueue.appendleft(tutor_list[0])
+            if tutor:
+                _tutorQueue.appendleft(tutor)
         else:
             autolog(
                 'TutorHangoutSession was not found: tutor_id {%s}, gid{%s}, student_id{%s}' % (
