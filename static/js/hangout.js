@@ -36,7 +36,6 @@ function heartBeat() {
 }
 
 
-
 // Publish tutor availability for subject(s)
 function publish(subjects) {
     jsonSubjects_ = subjects[0].subject;  // Used in updateParticipantsUi to display subject
@@ -91,7 +90,7 @@ function updateParticipantsUi(participants) {
         console.log('subscribing...');
         console.log('subject: ' + jsonSubjects_);
         $('.subject').html(jsonSubjects_);
-        $('.clientParticipant').html(participants_[participants.length-1].person.displayName);
+        $('.clientParticipant').html(participants_[participants.length - 1].person.displayName);
 
         studentId = participants_[0].person.id;
         httpRequest('POST', SERVER_PATH, 'subscribe',
@@ -145,6 +144,13 @@ function init() {
                         heartBeat();
                     }, 60000);
                 });
+            }
+
+            try {
+                if (gapi.hangout.av.hasCamera())
+                    gapi.hangout.av.setCameraMute(1);
+            } catch (e) {
+                console.log('camera: ' + e.message);
             }
 
             gapi.hangout.data.onStateChanged.add(function (eventObj) {

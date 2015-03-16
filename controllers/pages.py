@@ -1,3 +1,4 @@
+import data
 from controllers.data import DataHandler
 from lib.base import BaseHandler
 from models.models import *
@@ -54,4 +55,22 @@ class SurveysPage(BaseHandler):
     def get(self):
         self.render_template('templates/surveys.html')
 
+
+class WritingPage(BaseHandler):
+    def get(self):
+        subjects = data.DataHandler.get_hangout_subjects(subject='Writing')
+        if subjects:
+            template_data = {'subjects_query': subjects}
+            self.render_template('templates/writing.html', **template_data)
+        else:
+            self.render_template('templates/unavailable.html')
+
+class SubjectStatusPage(BaseHandler):
+    def get(self):
+        subjects = data.DataHandler.get_hangout_subjects()
+        if subjects:
+            template_data = {'subjects_query': subjects}
+            self.render_template('templates/writing.html', **template_data)
+        else:
+            self.render_template('templates/unavailable.html')
 

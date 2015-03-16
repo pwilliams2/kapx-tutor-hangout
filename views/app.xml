@@ -101,7 +101,6 @@
         <div>
             <p>Today is: <span class="today"></span></p>
             <p><b>Instructor: </b><span class="instructor"></span></p>
-
         </div>
     </div>
     <!-- Toolbox button panel -->

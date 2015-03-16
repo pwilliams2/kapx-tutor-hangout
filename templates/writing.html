@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>KAPx Tutor Client</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="container">
+    <div class="row clearfix">
+        <div class="col-sm-8 column">
+            <div class="table-wrapper">
+                <table class="table table-hover">
+
+                    <tbody>
+                    {% for subject in subjects_query %}
+                    <tr>
+                        <td><img class="img-thumbnail" style="height: 40px;width: 40px;;" src={{subject.image_url}}>
+                        </td>
+                        <td class="text-middle">{{subject.subject}}</td>
+
+                        {% if subject.is_available and subject.subject.lower() == 'writing' %}
+                        <td style="color: #398439;">Available <span>
+                                <button type="button" class="btn btn-success btn-xs launch-hangout"
+                                        style="vertical-align: middle">
+                                    <span class="glyphicon glyphicon-facetime-video" aria-hidden="true"></span>
+
+                                    <div class="hidden gid">{{subject.gid}}</div>
+                                    <div class="hidden subject">{{subject.subject}}</div>
+                                </button>
+                                </span>
+                        </td>
+                        {% elif subject.is_busy %}
+                        <td>Busy <span class="glyphicon glyphicon-time" aria-hidden="true"
+                                       style="vertical-align: middle"></span>
+                        </td>
+
+                        {% else %}
+                        <td>Not Available</td>
+
+                        {% endif %}
+
+                    </tr>
+                    {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="show"></div>
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<!-- Compiled and minified Bootstrap JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="js/tutor-client.js?v=1.01"></script>
+</body>
+</html>

@@ -18,11 +18,6 @@ indexes:
 - kind: TutorHangoutSessions
   properties:
   - name: tutor_id
-  - name: tutor_name
-
-- kind: TutorHangoutSessions
-  properties:
-  - name: tutor_id
   - name: duration
 
 - kind: TutorHangoutSessions
@@ -31,6 +26,11 @@ indexes:
   - name: is_active
 
 - kind: TutorHangoutSessions
+  properties:
+  - name: tutor_id
+  - name: tutor_name
+
+- kind: TutorHangoutSessions
   ancestor: yes
   properties:
   - name: gid
@@ -61,6 +61,10 @@ indexes:
   - name: gid
     direction: desc
 
+- kind: TutorSubjects
+  ancestor: yes
+  properties:
+  - name: gid
 
 - kind: TutorSubjects
   ancestor: yes
@@ -71,18 +75,13 @@ indexes:
 - kind: TutorSubjects
   ancestor: yes
   properties:
-  - name: gid
+  - name: tutor_id
 
 - kind: TutorSubjects
   ancestor: yes
   properties:
   - name: tutor_id
   - name: gid
-
-- kind: TutorSubjects
-  ancestor: yes
-  properties:
-  - name: tutor_id
 
 - kind: TutorSurveys
   ancestor: yes

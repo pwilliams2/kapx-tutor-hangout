@@ -19,7 +19,7 @@
 
 var DICTIONARY_URL = 'http://dictionary.reference.com/';
 var SURVEY_URL = 'http://kaplan.libsurveys.com/loader.php?id=7777f816624c182ea729979de88aeabc';
-
+var DRIVE_URL = 'https://docs.google.com/picker?protocol=gadgets&origin=https://plus.google.com&title=Choose%20files%20to%20share%20with%20a%20link&hl=en&ui=2&multiselectEnabled=true&hostId=hangouts&authuser=0&relayUrl=https%3A%2F%2Fplus.google.com%2Ffavicon.ico&nav=((%22all%22%2Cnull%2C%7B%22ownedByMe%22%3Atrue%2C%22includeFolders%22%3Atrue%2C%22docTypesDropDown%22%3Atrue%2C%22selectFolder%22%3Atrue%7D)%2C(%22all%22%2Cnull%2C%7B%22ownedByMe%22%3Afalse%2C%22includeFolders%22%3Atrue%2C%22docTypesDropDown%22%3Atrue%2C%22selectFolder%22%3Atrue%7D)%2C(%22upload%22%2Cnull%2C%7B%22query%22%3A%22docs%22%7D))&rpctoken=8l7n7n9hf75m&rpcService=lcs85d4xd2pf'
 $(function () {
     console.log('loading subjects');
     var id = 0,
@@ -27,8 +27,7 @@ $(function () {
 
             var rows = [
                 {"subject": "Business"},
-                {"subject": "General Math"},
-                {"subject": "Calculus"},
+                {"subject": "Math"},
                 {"subject": "Science"},
                 {"subject": "Technology"},
                 {"subject": "Writing"}
@@ -76,6 +75,10 @@ $(function () {
 
     $('.btn-dictionary').click(function () {
         window.open(DICTIONARY_URL, "", "width=1002,height=700,location=0,menubar=0,scrollbars=1,status=1,resizable=0")
+    });
+
+    $('.btn-drive').click(function () {
+        window.open(DRIVE_URL, "", "width=1002,height=700,location=0,menubar=0,scrollbars=1,status=1,resizable=0")
     });
 
 

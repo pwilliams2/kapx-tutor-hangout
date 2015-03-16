@@ -20,6 +20,8 @@ _routes = [
     RedirectRoute('/analytics', pages.AnalyticsPage, name='Analytics', strict_slash=True),
     RedirectRoute('/reports', pages.ReportCardPage, name='ReportCard', strict_slash=True),
     RedirectRoute('/sessions', pages.SessionsPage, name='Sessions', strict_slash=True),
+    RedirectRoute('/writing', pages.WritingPage, name='Writing', strict_slash=True),
+    RedirectRoute('/subject_status', pages.SubjectStatusPage, name='Subjects', strict_slash=True),
     RedirectRoute('/surveys', pages.SurveysPage, name='Surveys', strict_slash=True),
 
     #Tutor Publish
